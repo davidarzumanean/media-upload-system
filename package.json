@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:core": "pnpm --filter @media-upload/core build",
+    "watch:core": "pnpm --filter @media-upload/core build:watch",
+    "dev:web": "pnpm --filter web dev",
+    "dev:mobile": "pnpm --filter mobile start"
   },
   "keywords": [],
   "author": "",
