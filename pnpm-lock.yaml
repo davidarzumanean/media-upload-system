@@ -50,6 +50,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@media-upload/core':
+        specifier: workspace:*
+        version: link:../../packages/upload-core
       clsx:
         specifier: ^2.1.1
         version: 2.1.1

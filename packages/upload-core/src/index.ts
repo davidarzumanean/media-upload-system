@@ -16,3 +16,5 @@ export { CHUNK_SIZE, calculateTotalChunks, getRetryDelay } from './chunking.js';
 
 export { UploadManager } from './upload-manager.js';
 export type { UploadManagerOptions } from './upload-manager.js';
+
+export { formatFileSize, formatSpeed, formatDuration, formatDate } from './format.js';

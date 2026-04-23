@@ -66,29 +66,40 @@ export class UploadManager {
 
   async start(): Promise<void> {
     const queued = [...this.sessions.values()].filter(s => s.status === 'queued');
+    if (queued.length === 0) {
+      this.dispatch();
+      return;
+    }
 
+    // Transition ALL queued sessions to validating in one shot so every card
+    // appears in the UI immediately, before any network request is made.
     for (const session of queued) {
       session.status = 'validating';
-      this.emit();
-
-      try {
-        const { uploadId, totalChunks } = await this.apiClient.initiate(session.fileDescriptor);
-        session.uploadId = uploadId;
-        session.totalChunks = totalChunks > 0 ? totalChunks : calculateTotalChunks(session.fileDescriptor.size);
-        session.status = 'uploading';
-
-        // Re-key by real uploadId
-        this.sessions.delete(session.fileDescriptor.id);
-        this.sessions.set(uploadId, session);
-
-        this.enqueueChunksForSession(session);
-        this.emit();
-      } catch (err) {
-        session.status = 'failed';
-        session.error = err instanceof Error ? err.message : String(err);
-        this.emit();
-      }
     }
+    this.emit();
+
+    // Initiate all files concurrently — each resolves independently.
+    await Promise.allSettled(
+      queued.map(async (session) => {
+        try {
+          const { uploadId, totalChunks } = await this.apiClient.initiate(session.fileDescriptor);
+          session.uploadId = uploadId;
+          session.totalChunks = totalChunks > 0 ? totalChunks : calculateTotalChunks(session.fileDescriptor.size);
+          session.status = 'uploading';
+
+          // Re-key by real uploadId
+          this.sessions.delete(session.fileDescriptor.id);
+          this.sessions.set(uploadId, session);
+
+          this.enqueueChunksForSession(session);
+          this.emit();
+        } catch (err) {
+          session.status = 'failed';
+          session.error = err instanceof Error ? err.message : String(err);
+          this.emit();
+        }
+      }),
+    );
 
     this.dispatch();
   }
@@ -115,6 +126,31 @@ export class UploadManager {
     if (!session || session.status !== 'paused') return;
 
     session.status = 'uploading';
+    this.enqueueChunksForSession(session);
+    this.emit();
+    this.dispatch();
+  }
+
+  remove(uploadId: string): void {
+    const session = this.sessions.get(uploadId);
+    if (!session) return;
+    const isDone =
+      session.status === 'completed' ||
+      session.status === 'canceled' ||
+      session.status === 'failed';
+    if (!isDone) return;
+    this.sessions.delete(uploadId);
+    this.emit();
+  }
+
+  retry(uploadId: string): void {
+    const session = this.sessions.get(uploadId);
+    if (!session || session.status !== 'failed') return;
+
+    session.status = 'uploading';
+    session.error = undefined;
+    session.retries = {};
+
     this.enqueueChunksForSession(session);
     this.emit();
     this.dispatch();
