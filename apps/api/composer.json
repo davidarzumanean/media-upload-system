@@ -1,0 +1,8 @@
+{
+    "require": {
+        "symfony/uid": "^7.4",
+        "doctrine/dbal": "^4.4",
+        "symfony/validator": "^7.4",
+        "symfony/serializer": "^7.4"
+    }
+}
