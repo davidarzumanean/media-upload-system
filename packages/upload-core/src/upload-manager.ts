@@ -151,6 +151,14 @@ export class UploadManager {
     session.error = undefined;
     session.retries = {};
 
+    // All chunks already uploaded but finalize failed — go straight to
+    // finalize instead of re-uploading chunks that are already on the server.
+    if (session.totalChunks > 0 && session.uploadedChunks.length === session.totalChunks) {
+      this.emit();
+      this.finalizeSession(session);
+      return;
+    }
+
     this.enqueueChunksForSession(session);
     this.emit();
     this.dispatch();

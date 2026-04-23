@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { UploadSession, UploadStatus } from '@media-upload/core'
 import { formatFileSize, formatSpeed } from '@media-upload/core'
 import { ProgressBar } from './ProgressBar'
@@ -118,6 +118,24 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
   const { fileDescriptor: file, status, progress, error } = session
   const [imgError, setImgError] = useState(false)
 
+  // ── Progress bar visibility ───────────────────────────────────────────────
+  // `barFaded` drives the CSS opacity. Keeping the wrapper div mounted at all
+  // times (instead of conditionally rendering it) prevents layout shift when
+  // the bar disappears.
+  const [barFaded, setBarFaded] = useState(false)
+
+  useEffect(() => {
+    if (status === 'completed') {
+      // Hold at 100% for 1 s, then trigger the 500 ms CSS fade-out.
+      const timer = setTimeout(() => setBarFaded(true), 1000)
+      return () => clearTimeout(timer)
+    }
+    // failed / canceled: fade out immediately (no delay).
+    // Any active state: ensure the bar is visible (handles retry resetting status).
+    setBarFaded(status === 'failed' || status === 'canceled')
+  }, [status])
+  // ─────────────────────────────────────────────────────────────────────────
+
   const cfg = statusConfig[status]
   const isImage = file.mimeType.startsWith('image/')
   const id = session.uploadId || file.id
@@ -125,7 +143,11 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
   const pct = Math.round(progress * 100)
   const uploadedBytes = Math.round(progress * file.size)
 
-  const showProgressBar =
+  // The bar row is absent only while a file is still queued — once it moves
+  // to any other state the row (or its placeholder) stays to prevent shift.
+  const hasBarRow = status !== 'queued'
+  // Whether to actually render the ProgressBar inside the row.
+  const renderBar =
     status === 'uploading' || status === 'paused' || status === 'validating' || status === 'completed'
   const showPct = status === 'uploading' || status === 'paused'
   const showTransferred = status === 'uploading' || status === 'paused'
@@ -167,14 +189,25 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
           </span>
         </div>
 
-        {/* Progress bar */}
-        {showProgressBar && (
+        {/* Progress bar row — always present after 'queued' to hold height */}
+        {hasBarRow && (
           <div className="flex items-center gap-2">
-            <ProgressBar
-              progress={status === 'completed' ? 1 : progress}
-              color={cfg.progressColor}
-              className="flex-1"
-            />
+            {/*
+              Wrapper is always h-1.5 so removing the bar content never
+              collapses the row. opacity is CSS-transitioned so the fade
+              plays smoothly instead of the element just vanishing.
+            */}
+            <div
+              className="flex-1 h-1.5 transition-opacity duration-500 ease-out"
+              style={{ opacity: barFaded ? 0 : 1 }}
+            >
+              {renderBar && (
+                <ProgressBar
+                  progress={status === 'completed' ? 1 : progress}
+                  color={cfg.progressColor}
+                />
+              )}
+            </div>
             {showPct && (
               <span className="text-xs tabular-nums text-gray-400 w-7 text-right shrink-0">
                 {pct}%

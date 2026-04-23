@@ -131,7 +131,7 @@ class UploadService
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $detectedMime = $finfo->file($tmpFile);
         $allowedMimes = [
-            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp',
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/avif',
             'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/mpeg',
         ];
 

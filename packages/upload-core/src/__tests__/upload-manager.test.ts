@@ -232,6 +232,53 @@ describe('UploadManager', () => {
     expect(snap.sessions['uid-a'].error).toBe('persistent error');
   });
 
+  it('retries finalize directly when all chunks are already uploaded', async () => {
+    // Simulate: all chunks upload fine, finalize fails once, then succeeds on retry.
+    let finalizeAttempts = 0;
+
+    const api = makeApiClient({
+      finalize: vi.fn().mockImplementation(() => {
+        finalizeAttempts++;
+        if (finalizeAttempts === 1) return Promise.reject(new Error('server rejected'));
+        return Promise.resolve();
+      }),
+    });
+
+    const retryManager = new UploadManager({
+      apiClient: api,
+      chunkReader: reader,
+      maxConcurrent: 3,
+      maxRetries: 3,
+      retryDelay: () => 0,
+    });
+
+    const snapshots: UploadManagerSnapshot[] = [];
+    retryManager.setOnChange(snap => snapshots.push(snap));
+
+    const file = makeFile('a');
+    await retryManager.addFiles([file]);
+    await retryManager.start();
+    await flushPromises();
+
+    // After first finalize failure the session should be 'failed'
+    const failedSnap = retryManager.getSnapshot();
+    expect(failedSnap.sessions['uid-a'].status).toBe('failed');
+    expect(failedSnap.sessions['uid-a'].error).toBe('server rejected');
+
+    // All 3 chunks must already be recorded as uploaded
+    expect(failedSnap.sessions['uid-a'].uploadedChunks).toHaveLength(3);
+
+    // Retry: should NOT re-upload any chunks, only call finalize again
+    retryManager.retry('uid-a');
+    await flushPromises();
+
+    expect(api.uploadChunk).toHaveBeenCalledTimes(3); // unchanged — no re-uploads
+    expect(api.finalize).toHaveBeenCalledTimes(2);    // called again on retry
+
+    const finalSnap = retryManager.getSnapshot();
+    expect(finalSnap.sessions['uid-a'].status).toBe('completed');
+  });
+
   it('calls onChange on every state transition', async () => {
     const file = makeFile('a');
     await manager.addFiles([file]);

@@ -38,7 +38,10 @@ export function createApiClient(): ApiClient {
 
     async finalize(uploadId: string): Promise<void> {
       const res = await fetch(`${BASE_URL}/uploads/${uploadId}/finalize`, { method: 'POST' })
-      if (!res.ok) throw new Error(`Finalize failed: ${res.status} ${res.statusText}`)
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || `Finalize failed: ${res.status}`)
+      }
     },
 
     async getStatus(uploadId: string): Promise<{ status: UploadStatus }> {
