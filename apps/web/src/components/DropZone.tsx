@@ -8,16 +8,25 @@ interface DropZoneProps {
   validationErrors: ValidationError[]
   onClearErrors: () => void
   disabled?: boolean
-  /** Render as a compact "Add more" strip when the file list is already visible */
   compact?: boolean
-  /** Maximum number of files accepted per drop. Defaults to 10. */
   maxFiles?: number
 }
 
-function UploadIcon({ className }: { className?: string }) {
+function UploadCloudIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+    <svg
+      className={className}
+      viewBox="0 0 512 512"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={32}
+      aria-hidden="true"
+    >
+      <path d="M320,367.79h76c55,0,100-29.21,100-83.6s-53-81.47-96-83.6c-8.89-85.06-71-136.8-144-136.8-69,0-113.44,45.79-128,91.2-60,5.7-112,43.88-112,106.4s54,106.4,120,106.4h56" />
+      <polyline points="320 255.79 256 191.79 192 255.79" />
+      <line x1="256" y1="448.21" x2="256" y2="207.79" />
     </svg>
   )
 }
@@ -60,7 +69,6 @@ export function DropZone({ onFiles, validationErrors, onClearErrors, disabled, c
   return (
     <div className="space-y-3">
       {compact ? (
-        /* ── Compact strip shown after files are added ── */
         <div
           {...getRootProps()}
           role="button"
@@ -92,12 +100,11 @@ export function DropZone({ onFiles, validationErrors, onClearErrors, disabled, c
             {isDragActive && !rejected
               ? 'Drop to add more files'
               : rejected
-              ? `Only images & videos, max ${maxFiles} files`
-              : 'Add more files'}
+                ? `Only images & videos, max ${maxFiles} files`
+                : 'Add more files'}
           </span>
         </div>
       ) : (
-        /* ── Full drop zone for empty state ── */
         <div
           {...getRootProps()}
           role="button"
@@ -114,14 +121,14 @@ export function DropZone({ onFiles, validationErrors, onClearErrors, disabled, c
 
           <div
             className={clsx(
-              'flex items-center justify-center w-16 h-16 rounded-2xl transition-colors',
-              isDragActive && !rejected ? 'bg-blue-100' : rejected ? 'bg-red-100' : 'bg-white shadow-sm border border-gray-100',
+              'w-[88px] h-[88px] rounded-[22px] flex items-center justify-center transition-colors',
+              isDragActive && !rejected ? 'bg-blue-100' : rejected ? 'bg-red-100' : 'bg-blue-50',
             )}
           >
-            <UploadIcon
+            <UploadCloudIcon
               className={clsx(
-                'w-8 h-8',
-                isDragActive && !rejected ? 'text-blue-500' : rejected ? 'text-red-500' : 'text-gray-300',
+                'w-11 h-11',
+                isDragActive && !rejected ? 'text-blue-500' : rejected ? 'text-red-500' : 'text-blue-400',
               )}
             />
           </div>
@@ -139,7 +146,6 @@ export function DropZone({ onFiles, validationErrors, onClearErrors, disabled, c
         </div>
       )}
 
-      {/* Validation errors */}
       {validationErrors.length > 0 && (
         <div role="alert" className="animate-in-down rounded-xl border border-red-200 bg-red-50 px-4 py-3">
           <div className="flex items-start gap-2.5">

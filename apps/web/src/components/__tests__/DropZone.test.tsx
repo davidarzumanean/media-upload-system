@@ -56,8 +56,8 @@ describe('DropZone (full / idle)', () => {
   it('renders the headline text', () => {
     setupMock()
     render(<DropZone onFiles={vi.fn()} validationErrors={[]} onClearErrors={vi.fn()} />)
-    // The <p> headline has a single text node containing "Drop files here or"
-    expect(screen.getByText(/drop files here or/i)).toBeInTheDocument()
+    // The <h2> heading now reads "Upload media" (mobile-aligned empty state)
+    expect(screen.getByText(/upload media/i)).toBeInTheDocument()
   })
 
   it('renders the helper text with file count', () => {

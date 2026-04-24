@@ -22,18 +22,9 @@ export function UploadPage() {
   const hasFiles = Object.keys(snapshot.sessions).length > 0
 
   return (
-    <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-4">
-      {/* Page header */}
-      <div className="mb-2">
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Upload Media</h1>
-        <p className="text-gray-400 text-sm mt-0.5">
-          {hasFiles
-            ? 'Drop more files to add them to the queue.'
-            : 'Drop images or videos — uploads start automatically.'}
-        </p>
-      </div>
+    <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
 
-      {/* Drop zone — compact when files are already queued */}
+      {/* Drop zone — full empty-state hero when no files, compact strip otherwise */}
       <DropZone
         onFiles={addFiles}
         validationErrors={validationErrors}

@@ -19,10 +19,10 @@ const statusConfig: Record<
 > = {
   queued:     { label: 'Starting…',  badgeClass: 'bg-blue-50 text-blue-500',        progressColor: 'blue'   },
   validating: { label: 'Starting…',  badgeClass: 'bg-blue-50 text-blue-500',        progressColor: 'blue'   },
-  uploading:  { label: 'Uploading',  badgeClass: 'bg-blue-50 text-blue-600',        progressColor: 'blue'   },
-  paused:     { label: 'Paused',     badgeClass: 'bg-amber-50 text-amber-600',      progressColor: 'yellow' },
-  completed:  { label: 'Completed',  badgeClass: 'bg-emerald-50 text-emerald-600',  progressColor: 'green'  },
-  failed:     { label: 'Failed',     badgeClass: 'bg-red-50 text-red-500',          progressColor: 'red'    },
+  uploading:  { label: 'Uploading',  badgeClass: 'bg-blue-50 text-blue-500',        progressColor: 'blue'   },
+  paused:     { label: 'Paused',     badgeClass: 'bg-amber-50 text-amber-500',      progressColor: 'yellow' }, // amber-500 = warning #F59E0B
+  completed:  { label: 'Completed',  badgeClass: 'bg-emerald-50 text-emerald-500',  progressColor: 'green'  }, // emerald-500 = success #10B981
+  failed:     { label: 'Failed',     badgeClass: 'bg-red-50 text-red-500',          progressColor: 'red'    }, // red-500 = error #EF4444
   canceled:   { label: 'Canceled',   badgeClass: 'bg-gray-100 text-gray-400',       progressColor: 'red'    },
 }
 
@@ -211,47 +211,44 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
             <p className="text-xs text-red-500 leading-snug">{error}</p>
           </div>
         ) : (
-          <p className="text-xs text-gray-400 tabular-nums">
+          <p className="text-xs text-gray-600 tabular-nums">
             {showTransferred ? (
               <>
                 {formatFileSize(uploadedBytes)}
-                <span className="mx-1 text-gray-200">/</span>
+                <span className="mx-1 text-gray-300">/</span>
                 {formatFileSize(file.size)}
                 {speed > 512 && (
-                  <span className="ml-2 text-gray-400">{formatSpeed(speed)}</span>
+                  <span className="ml-2 text-gray-500">{formatSpeed(speed)}</span>
                 )}
                 {showPct && (
-                  <span className="ml-2 text-gray-300">{pct}%</span>
+                  <span className="ml-2 font-medium">{pct}%</span>
                 )}
               </>
             ) : (
               <>
                 {formatFileSize(file.size)}
-                <span className="mx-1.5 text-gray-200">·</span>
+                <span className="mx-1.5 text-gray-300">·</span>
                 {file.mimeType}
               </>
             )}
           </p>
         )}
 
-        {/* Row 3: progress bar — always present after 'queued' to hold height */}
+        {/* Row 3: progress bar + action buttons inline */}
         {hasBarRow && (
-          <div
-            className="h-1.5 transition-opacity duration-500 ease-out"
-            style={{ opacity: barFaded ? 0 : 1 }}
-          >
-            {renderBar && (
-              <ProgressBar
-                progress={status === 'completed' ? 1 : progress}
-                color={cfg.progressColor}
-              />
-            )}
-          </div>
-        )}
+          <div className="flex items-center gap-1.5">
+            <div
+              className="flex-1 h-1.5 transition-opacity duration-500 ease-out"
+              style={{ opacity: barFaded ? 0 : 1 }}
+            >
+              {renderBar && (
+                <ProgressBar
+                  progress={status === 'completed' ? 1 : progress}
+                  color={cfg.progressColor}
+                />
+              )}
+            </div>
 
-        {/* Row 4: action buttons (only for active / failed states) */}
-        {(status === 'uploading' || status === 'paused' || status === 'failed') && (
-          <div className="flex items-center gap-0.5 -ml-1.5 pt-0.5">
             {status === 'uploading' && (
               <>
                 <IconButton
@@ -294,7 +291,6 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
             )}
           </div>
         )}
-
       </div>
     </article>
   )

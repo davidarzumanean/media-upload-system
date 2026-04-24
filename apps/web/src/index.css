@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+/* ─── Design tokens (mirrored from @media-upload/core theme.ts) ── */
+/*     Tailwind v4 @theme turns these into utility classes:         */
+/*     bg-primary, text-warning, border-error, etc.                 */
+@theme {
+  --color-primary:       #3B82F6;
+  --color-primary-light: #EFF6FF;
+  --color-primary-dark:  #2563EB;
+
+  --color-success:       #10B981;
+  --color-success-light: #ECFDF5;
+
+  --color-warning:       #F59E0B;
+  --color-warning-light: #FFFBEB;
+
+  --color-error:         #EF4444;
+  --color-error-light:   #FEF2F2;
+}
+
 /* ─── Base ─────────────────────────────────────────────────────── */
 @layer base {
   * {
