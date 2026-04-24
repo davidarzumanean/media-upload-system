@@ -125,6 +125,17 @@ class UploadController extends AbstractController
     #[Route('/{uploadId}/cancel', methods: ['POST'])]
     public function cancel(string $uploadId): JsonResponse
     {
+        return $this->doCancel($uploadId);
+    }
+
+    #[Route('/{uploadId}', methods: ['DELETE'])]
+    public function delete(string $uploadId): JsonResponse
+    {
+        return $this->doCancel($uploadId);
+    }
+
+    private function doCancel(string $uploadId): JsonResponse
+    {
         $upload = $this->uploadService->getUpload($uploadId);
         if (!$upload) {
             return $this->json(['error' => 'Upload not found'], 404);
