@@ -122,18 +122,18 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
   // `barFaded` drives the CSS opacity. Keeping the wrapper div mounted at all
   // times (instead of conditionally rendering it) prevents layout shift when
   // the bar disappears.
-  const [barFaded, setBarFaded] = useState(false)
+  const [completedDelay, setCompletedDelay] = useState(false)
 
   useEffect(() => {
-    if (status === 'completed') {
-      // Hold at 100% for 1 s, then trigger the 500 ms CSS fade-out.
-      const timer = setTimeout(() => setBarFaded(true), 1000)
-      return () => clearTimeout(timer)
+    if (status !== 'completed') return
+    const timer = setTimeout(() => setCompletedDelay(true), 1000)
+    return () => {
+      clearTimeout(timer)
+      setCompletedDelay(false)
     }
-    // failed / canceled: fade out immediately (no delay).
-    // Any active state: ensure the bar is visible (handles retry resetting status).
-    setBarFaded(status === 'failed' || status === 'canceled')
   }, [status])
+
+  const barFaded = status === 'failed' || status === 'canceled' || (status === 'completed' && completedDelay)
   // ─────────────────────────────────────────────────────────────────────────
 
   const cfg = statusConfig[status]

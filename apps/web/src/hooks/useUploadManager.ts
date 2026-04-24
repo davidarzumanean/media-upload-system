@@ -54,7 +54,6 @@ function saveHistory(entries: HistoryEntry[]): void {
 const previewUrls = new Map<string, string>()
 
 export function useUploadManager(): UseUploadManagerReturn {
-  const managerRef = useRef<UploadManager | null>(null)
   const [rawSnapshot, setRawSnapshot] = useState<UploadManagerSnapshot>({ sessions: {} })
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
@@ -62,16 +61,12 @@ export function useUploadManager(): UseUploadManagerReturn {
   const [speeds, setSpeeds] = useState<Record<string, number>>({})
   const speedTrackRef = useRef<Record<string, { bytes: number; ts: number; speed: number }>>({})
 
-  const manager = useMemo(() => {
-    const m = new UploadManager({
-      apiClient: createApiClient(),
-      chunkReader,
-      maxConcurrent: 3,
-      maxRetries: 3,
-    })
-    managerRef.current = m
-    return m
-  }, [])
+  const [manager] = useState(() => new UploadManager({
+    apiClient: createApiClient(),
+    chunkReader,
+    maxConcurrent: 3,
+    maxRetries: 3,
+  }))
 
   useEffect(() => {
     manager.setOnChange((snap) => {
@@ -146,15 +141,6 @@ export function useUploadManager(): UseUploadManagerReturn {
       })
     })
   }, [manager])
-
-  useEffect(() => {
-    setHiddenUploadIds((prev) => {
-      if (prev.length === 0) return prev
-      const visibleIds = new Set(Object.keys(rawSnapshot.sessions))
-      const next = prev.filter((id) => visibleIds.has(id))
-      return next.length === prev.length ? prev : next
-    })
-  }, [rawSnapshot])
 
   const snapshot = useMemo<UploadManagerSnapshot>(() => {
     if (hiddenUploadIds.length === 0) return rawSnapshot

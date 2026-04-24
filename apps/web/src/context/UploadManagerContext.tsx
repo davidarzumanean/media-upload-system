@@ -12,6 +12,7 @@ export function UploadManagerProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useUploadManagerContext(): UseUploadManagerReturn {
   const ctx = useContext(UploadManagerContext)
   if (!ctx) throw new Error('useUploadManagerContext must be used inside UploadManagerProvider')
