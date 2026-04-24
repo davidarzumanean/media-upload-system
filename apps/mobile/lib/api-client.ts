@@ -3,6 +3,18 @@ import type { ApiClient, FileDescriptor, UploadStatus } from '@media-upload/core
 const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api'
 
+const appendReactNativeFile = (
+  formData: FormData,
+  fieldName: string,
+  file: {
+    uri: string
+    type: string
+    name: string
+  },
+) => {
+  formData.append(fieldName, file as unknown as Blob)
+}
+
 export function createApiClient(): ApiClient {
   return {
     async initiate(file: FileDescriptor): Promise<{ uploadId: string; totalChunks: number }> {
@@ -25,9 +37,26 @@ export function createApiClient(): ApiClient {
       chunkIndex: number,
       data: Blob | ArrayBuffer,
     ): Promise<void> {
-      const blob = data instanceof Blob ? data : new Blob([data])
+      // React Native doesn't support Blob from ArrayBuffer.
+      // Convert ArrayBuffer to base64 and send as a file-like object.
+      let base64: string
+      if (data instanceof ArrayBuffer) {
+        const bytes = new Uint8Array(data)
+        let binary = ''
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i])
+        }
+        base64 = btoa(binary)
+      } else {
+        throw new Error('Expected ArrayBuffer from chunk reader')
+      }
+
       const form = new FormData()
-      form.append('chunk', blob, 'chunk.bin')
+      appendReactNativeFile(form, 'chunk', {
+        uri: `data:application/octet-stream;base64,${base64}`,
+        type: 'application/octet-stream',
+        name: 'chunk.bin',
+      })
 
       const res = await fetch(`${BASE_URL}/uploads/${uploadId}/chunks/${chunkIndex}`, {
         method: 'POST',

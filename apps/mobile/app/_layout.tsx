@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router'
 import { StyleSheet, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { colors } from '@media-upload/core'
-import { UploadManagerProvider } from '../lib/upload-manager-context'
+import { UploadManagerProvider } from '@/lib/upload-manager-context'
 
 export default function RootLayout() {
   return (
