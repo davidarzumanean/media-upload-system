@@ -10,6 +10,8 @@ interface DropZoneProps {
   disabled?: boolean
   /** Render as a compact "Add more" strip when the file list is already visible */
   compact?: boolean
+  /** Maximum number of files accepted per drop. Defaults to 10. */
+  maxFiles?: number
 }
 
 function UploadIcon({ className }: { className?: string }) {
@@ -28,7 +30,7 @@ function AlertIcon({ className }: { className?: string }) {
   )
 }
 
-export function DropZone({ onFiles, validationErrors, onClearErrors, disabled, compact }: DropZoneProps) {
+export function DropZone({ onFiles, validationErrors, onClearErrors, disabled, compact, maxFiles = 10 }: DropZoneProps) {
   const [rejected, setRejected] = useState(false)
 
   const onDrop = useCallback(
@@ -51,7 +53,7 @@ export function DropZone({ onFiles, validationErrors, onClearErrors, disabled, c
     onDrop,
     onDropRejected,
     accept: { 'image/*': [], 'video/*': [] },
-    maxFiles: 10,
+    maxFiles,
     disabled,
   })
 
@@ -90,7 +92,7 @@ export function DropZone({ onFiles, validationErrors, onClearErrors, disabled, c
             {isDragActive && !rejected
               ? 'Drop to add more files'
               : rejected
-              ? 'Only images & videos, max 10 files'
+              ? `Only images & videos, max ${maxFiles} files`
               : 'Add more files'}
           </span>
         </div>
@@ -127,11 +129,11 @@ export function DropZone({ onFiles, validationErrors, onClearErrors, disabled, c
           {isDragActive && !rejected ? (
             <p className="text-blue-600 font-semibold text-base">Drop files here</p>
           ) : rejected ? (
-            <p className="text-red-600 font-medium">Only images & videos — max 10 files</p>
+            <p className="text-red-600 font-medium">Only images & videos — max {maxFiles} files</p>
           ) : (
             <div className="space-y-1.5">
               <p className="text-gray-800 font-semibold">Drop files here or <span className="text-blue-600">browse</span></p>
-              <p className="text-gray-400 text-sm">Images & videos · up to 10 files · 100 MB each</p>
+              <p className="text-gray-400 text-sm">Images & videos · up to {maxFiles} files · 100 MB each</p>
             </div>
           )}
         </div>
