@@ -4,9 +4,12 @@
   "description": "Platform-agnostic upload orchestration library",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
+  "react-native": "./src/index.ts",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "react-native": "./src/index.ts",
+      "source": "./src/index.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
