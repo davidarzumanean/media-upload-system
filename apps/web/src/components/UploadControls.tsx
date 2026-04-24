@@ -10,7 +10,7 @@ export function UploadControls({ snapshot }: UploadControlsProps) {
 
   // Show the bar as long as at least one session is still in-progress
   const inProgressSessions = sessions.filter(
-    (s) => s.status === 'uploading' || s.status === 'validating' || s.status === 'queued',
+    (s) => s.status === 'uploading' || s.status === 'validating' || s.status === 'queued' || s.status === 'paused',
   )
   if (inProgressSessions.length === 0) return null
 
