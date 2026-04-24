@@ -18,6 +18,7 @@ export interface HistoryEntry {
   size: number
   mimeType: string
   completedAt: string
+  previewUri?: string
 }
 
 export interface UseUploadManagerReturn {
@@ -112,12 +113,15 @@ export function useUploadManager(): UseUploadManagerReturn {
 
         for (const session of Object.values(snap.sessions)) {
           if (session.status === 'completed' && !existingIds.has(session.uploadId)) {
+            // Capture the preview URL into history BEFORE we revoke it below
+            const previewUri = session.fileDescriptor.previewUri
             newEntries.push({
               id: session.uploadId,
               name: session.fileDescriptor.name,
               size: session.fileDescriptor.size,
               mimeType: session.fileDescriptor.mimeType,
               completedAt: new Date().toISOString(),
+              previewUri,
             })
           }
           if (

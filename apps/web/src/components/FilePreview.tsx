@@ -155,11 +155,11 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
 
   return (
     <article
-      className="animate-in flex items-center gap-3 px-4 py-3.5 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+      className="animate-in flex items-start gap-3 px-4 py-3.5 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
       aria-label={`${file.name} — ${cfg.label}`}
     >
       {/* ── Thumbnail ── */}
-      <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center">
+      <div className="w-10 h-10 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center mt-0.5">
         {isImage && file.previewUri && !imgError ? (
           <img
             src={file.previewUri}
@@ -175,48 +175,36 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 min-w-0 space-y-1.5">
-        {/* Name + badge */}
-        <div className="flex items-center gap-2 min-w-0">
-          <p className="text-sm font-medium text-gray-800 truncate" title={file.name}>
+      <div className="flex-1 min-w-0 space-y-1">
+
+        {/* Row 1: filename + badge + dismiss */}
+        <div className="flex items-center gap-2">
+          <p className="flex-1 min-w-0 text-sm font-medium text-gray-800 truncate" title={file.name}>
             {file.name}
           </p>
           <span
             aria-live="polite"
-            className={`text-xs font-medium px-1.5 py-0.5 rounded-full shrink-0 ${cfg.badgeClass}`}
+            className={`shrink-0 text-xs font-medium px-1.5 py-0.5 rounded-full ${cfg.badgeClass}`}
           >
             {cfg.label}
           </span>
+          {isDone && status !== 'failed' && (
+            <IconButton
+              onClick={() => onDismiss(id)}
+              label={`Dismiss ${file.name}`}
+              icon={<XMarkIcon />}
+            />
+          )}
+          {status === 'failed' && (
+            <IconButton
+              onClick={() => onDismiss(id)}
+              label={`Dismiss ${file.name}`}
+              icon={<XMarkIcon />}
+            />
+          )}
         </div>
 
-        {/* Progress bar row — always present after 'queued' to hold height */}
-        {hasBarRow && (
-          <div className="flex items-center gap-2">
-            {/*
-              Wrapper is always h-1.5 so removing the bar content never
-              collapses the row. opacity is CSS-transitioned so the fade
-              plays smoothly instead of the element just vanishing.
-            */}
-            <div
-              className="flex-1 h-1.5 transition-opacity duration-500 ease-out"
-              style={{ opacity: barFaded ? 0 : 1 }}
-            >
-              {renderBar && (
-                <ProgressBar
-                  progress={status === 'completed' ? 1 : progress}
-                  color={cfg.progressColor}
-                />
-              )}
-            </div>
-            {showPct && (
-              <span className="text-xs tabular-nums text-gray-400 w-7 text-right shrink-0">
-                {pct}%
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Error OR meta row */}
+        {/* Row 2: meta or error */}
         {error ? (
           <div className="flex items-start gap-1.5">
             <ErrorIcon />
@@ -232,6 +220,9 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
                 {speed > 512 && (
                   <span className="ml-2 text-gray-400">{formatSpeed(speed)}</span>
                 )}
+                {showPct && (
+                  <span className="ml-2 text-gray-300">{pct}%</span>
+                )}
               </>
             ) : (
               <>
@@ -242,64 +233,68 @@ export function FilePreview({ session, speed = 0, onPause, onResume, onCancel, o
             )}
           </p>
         )}
-      </div>
 
-      {/* ── Action buttons ── */}
-      <div className="flex items-center gap-0.5 shrink-0">
-        {status === 'uploading' && (
-          <>
-            <IconButton
-              onClick={() => onPause(id)}
-              label={`Pause ${file.name}`}
-              icon={<PauseIcon />}
-              variant="primary"
-            />
-            <IconButton
-              onClick={() => onCancel(id)}
-              label={`Cancel ${file.name}`}
-              icon={<XMarkIcon />}
-              variant="danger"
-            />
-          </>
+        {/* Row 3: progress bar — always present after 'queued' to hold height */}
+        {hasBarRow && (
+          <div
+            className="h-1.5 transition-opacity duration-500 ease-out"
+            style={{ opacity: barFaded ? 0 : 1 }}
+          >
+            {renderBar && (
+              <ProgressBar
+                progress={status === 'completed' ? 1 : progress}
+                color={cfg.progressColor}
+              />
+            )}
+          </div>
         )}
-        {status === 'paused' && (
-          <>
-            <IconButton
-              onClick={() => onResume(id)}
-              label={`Resume ${file.name}`}
-              icon={<PlayIcon />}
-              variant="primary"
-            />
-            <IconButton
-              onClick={() => onCancel(id)}
-              label={`Cancel ${file.name}`}
-              icon={<XMarkIcon />}
-              variant="danger"
-            />
-          </>
+
+        {/* Row 4: action buttons (only for active / failed states) */}
+        {(status === 'uploading' || status === 'paused' || status === 'failed') && (
+          <div className="flex items-center gap-0.5 -ml-1.5 pt-0.5">
+            {status === 'uploading' && (
+              <>
+                <IconButton
+                  onClick={() => onPause(id)}
+                  label={`Pause ${file.name}`}
+                  icon={<PauseIcon />}
+                  variant="primary"
+                />
+                <IconButton
+                  onClick={() => onCancel(id)}
+                  label={`Cancel ${file.name}`}
+                  icon={<XMarkIcon />}
+                  variant="danger"
+                />
+              </>
+            )}
+            {status === 'paused' && (
+              <>
+                <IconButton
+                  onClick={() => onResume(id)}
+                  label={`Resume ${file.name}`}
+                  icon={<PlayIcon />}
+                  variant="primary"
+                />
+                <IconButton
+                  onClick={() => onCancel(id)}
+                  label={`Cancel ${file.name}`}
+                  icon={<XMarkIcon />}
+                  variant="danger"
+                />
+              </>
+            )}
+            {status === 'failed' && (
+              <IconButton
+                onClick={() => onRetry(id)}
+                label={`Retry ${file.name}`}
+                icon={<RetryIcon />}
+                variant="primary"
+              />
+            )}
+          </div>
         )}
-        {status === 'failed' && (
-          <>
-            <IconButton
-              onClick={() => onRetry(id)}
-              label={`Retry ${file.name}`}
-              icon={<RetryIcon />}
-              variant="primary"
-            />
-            <IconButton
-              onClick={() => onDismiss(id)}
-              label={`Dismiss ${file.name}`}
-              icon={<XMarkIcon />}
-            />
-          </>
-        )}
-        {isDone && status !== 'failed' && (
-          <IconButton
-            onClick={() => onDismiss(id)}
-            label={`Dismiss ${file.name}`}
-            icon={<XMarkIcon />}
-          />
-        )}
+
       </div>
     </article>
   )

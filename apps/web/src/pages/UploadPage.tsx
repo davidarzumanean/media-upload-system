@@ -1,8 +1,7 @@
-import { useUploadManager } from '../hooks/useUploadManager'
+import { useUploadManagerContext } from '../context/UploadManagerContext'
 import { DropZone } from '../components/DropZone'
 import { FileList } from '../components/FileList'
 import { UploadControls } from '../components/UploadControls'
-import { UploadHistory } from '../components/UploadHistory'
 
 export function UploadPage() {
   const {
@@ -18,9 +17,7 @@ export function UploadPage() {
     retryAllFailed,
     dismiss,
     clearAll,
-    history,
-    clearHistory,
-  } = useUploadManager()
+  } = useUploadManagerContext()
 
   const hasFiles = Object.keys(snapshot.sessions).length > 0
 
@@ -61,9 +58,6 @@ export function UploadPage() {
           onClearAll={clearAll}
         />
       )}
-
-      {/* Completed uploads history */}
-      <UploadHistory history={history} onClear={clearHistory} />
     </main>
   )
 }
