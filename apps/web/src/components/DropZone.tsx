@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import clsx from 'clsx'
+import { DEFAULT_MAX_SIZE_BYTES, formatFileSize } from '@media-upload/core'
 
 interface DropZoneProps {
   onFiles: (files: File[]) => void
@@ -126,12 +127,11 @@ export function DropZone({ onFiles, disabled, compact, maxFiles = 10 }: DropZone
           ) : (
             <div className="space-y-1.5">
               <p className="text-gray-800 font-semibold">Drop files here or <span className="text-blue-600">browse</span></p>
-              <p className="text-gray-400 text-sm">Images & videos · up to {maxFiles} files · 100 MB each</p>
+              <p className="text-gray-400 text-sm">Images & videos · up to {maxFiles} files · {formatFileSize(DEFAULT_MAX_SIZE_BYTES)} each</p>
             </div>
           )}
         </div>
       )}
-
     </div>
   )
 }

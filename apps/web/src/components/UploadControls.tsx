@@ -14,37 +14,46 @@ export function UploadControls({snapshot}: UploadControlsProps) {
   const hasVisibleProgress = sessions.some((s) => VISIBLE_PROGRESS_STATUSES.has(s.status))
   if (!hasVisibleProgress) return null
 
-  const completedCount = sessions.filter((s) => s.status === 'completed').length
-  const uploadingCount = sessions.filter((s) => s.status === 'uploading').length
-  const validatingCount = sessions.filter((s) => s.status === 'validating').length
-  const pausedCount = sessions.filter((s) => s.status === 'paused').length
-  const failedCount = sessions.filter((s) => s.status === 'failed').length
-  const canceledCount = sessions.filter((s) => s.status === 'canceled').length
+  const counts = sessions.reduce(
+    (acc, session) => {
+      acc[session.status] += 1
+      return acc
+    },
+    {
+      queued: 0,
+      validating: 0,
+      uploading: 0,
+      paused: 0,
+      completed: 0,
+      failed: 0,
+      canceled: 0,
+    } as Record<string, number>,
+  )
 
   const statusParts: string[] = []
 
-  if (completedCount > 0) {
-    statusParts.push(`${completedCount} of ${sessions.length} file${sessions.length !== 1 ? 's' : ''} completed`)
+  if (counts.completed > 0) {
+    statusParts.push(`${counts.completed} of ${sessions.length} file${sessions.length !== 1 ? 's' : ''} completed`)
   }
 
-  if (uploadingCount > 0) {
-    statusParts.push(`${uploadingCount} uploading`)
+  if (counts.uploading > 0) {
+    statusParts.push(`${counts.uploading} uploading`)
   }
 
-  if (validatingCount > 0) {
-    statusParts.push(`${validatingCount} preparing`)
+  if (counts.validating > 0) {
+    statusParts.push(`${counts.validating} preparing`)
   }
 
-  if (pausedCount > 0) {
-    statusParts.push(`${pausedCount} paused`)
+  if (counts.paused > 0) {
+    statusParts.push(`${counts.paused} paused`)
   }
 
-  if (failedCount > 0) {
-    statusParts.push(`${failedCount} failed`)
+  if (counts.failed > 0) {
+    statusParts.push(`${counts.failed} failed`)
   }
 
-  if (canceledCount > 0) {
-    statusParts.push(`${canceledCount} canceled`)
+  if (counts.canceled > 0) {
+    statusParts.push(`${counts.canceled} canceled`)
   }
 
   const statusText = statusParts.length > 0 ? statusParts.join(' · ') : 'Preparing uploads'

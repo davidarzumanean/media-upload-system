@@ -1,8 +1,8 @@
 import type { FileDescriptor, ValidationError } from './types.js';
 import { formatFileSize } from './format.js';
 
-const MAX_FILES = 10;
-const DEFAULT_MAX_SIZE = 100 * 1024 * 1024; // 100 MB
+export const DEFAULT_MAX_SIZE_BYTES = 100 * 1024 * 1024  // 100 MB
+export const DEFAULT_MAX_FILES = 10
 
 export interface ValidationOptions {
   maxFiles?: number;
@@ -18,8 +18,8 @@ export function validateFiles(
   files: FileDescriptor[],
   options: ValidationOptions = {},
 ): ValidationResult {
-  const maxFiles = options.maxFiles ?? MAX_FILES;
-  const maxSizeBytes = options.maxSizeBytes ?? DEFAULT_MAX_SIZE;
+  const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES;
+  const maxSizeBytes = options.maxSizeBytes ?? DEFAULT_MAX_SIZE_BYTES;
 
   const valid: FileDescriptor[] = [];
   const errors: ValidationError[] = [];

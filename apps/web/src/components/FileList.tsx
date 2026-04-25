@@ -1,5 +1,5 @@
 import type { UploadManagerSnapshot } from '@media-upload/core'
-import { FilePreview } from './FilePreview'
+import { FileUploadCard } from './FileUploadCard'
 
 interface FileListProps {
   snapshot: UploadManagerSnapshot
@@ -27,11 +27,26 @@ export function FileList({
   const entries = Object.entries(snapshot.sessions)
   if (entries.length === 0) return null
 
-  const sessions = entries.map(([, s]) => s)
-  const failedCount = sessions.filter((s) => s.status === 'failed').length
-  const dismissibleCount = sessions.filter(
-    (s) => s.status === 'completed' || s.status === 'canceled' || s.status === 'failed',
-  ).length
+  const sessions = Object.values(snapshot.sessions)
+
+  const counts = sessions.reduce(
+    (acc, s) => {
+      acc[s.status] += 1
+      return acc
+    },
+    {
+      queued: 0,
+      validating: 0,
+      uploading: 0,
+      paused: 0,
+      completed: 0,
+      failed: 0,
+      canceled: 0,
+    } as Record<string, number>,
+  )
+
+  const failedCount = counts.failed
+  const dismissibleCount = counts.completed + counts.failed + counts.canceled
 
   return (
     <section aria-label="Upload queue" className="space-y-2.5">
@@ -41,7 +56,7 @@ export function FileList({
           {sessions.length} file{sessions.length !== 1 ? 's' : ''}
         </span>
         <div className="flex items-center gap-3">
-          {failedCount > 1 && (
+          {failedCount > 0 && (
             <button
               onClick={onRetryAllFailed}
               className="cursor-pointer text-xs text-blue-600 hover:text-blue-700 transition-colors font-medium"
@@ -62,7 +77,7 @@ export function FileList({
 
       {/* Cards */}
       {entries.map(([id, session]) => (
-        <FilePreview
+        <FileUploadCard
           // Use the fileDescriptor.id as the React key — it is stable for the
           // entire session lifetime, unlike the snapshot key which changes from
           // file.id → uploadId when the server assigns a real upload ID.

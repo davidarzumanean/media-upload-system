@@ -9,7 +9,7 @@ export type {
   ValidationError,
 } from './types.js';
 
-export { validateFiles } from './validation.js';
+export { DEFAULT_MAX_SIZE_BYTES, DEFAULT_MAX_FILES, validateFiles } from './validation.js';
 export type { ValidationOptions, ValidationResult } from './validation.js';
 
 export { CHUNK_SIZE, calculateTotalChunks, getRetryDelay } from './chunking.js';
