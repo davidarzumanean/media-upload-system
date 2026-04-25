@@ -8,10 +8,18 @@
     "build:core": "pnpm --filter @media-upload/core build",
     "watch:core": "pnpm --filter @media-upload/core build:watch",
     "dev:web": "pnpm --filter web dev",
-    "dev:mobile": "pnpm --filter mobile start"
+    "dev:mobile": "pnpm --filter mobile start",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,js,jsx,json,css,md}\" \"packages/**/*.{ts,tsx,js,jsx,json,css,md}\" \"*.{json,md}\"",
+    "lint": "eslint \"apps/{web,mobile}/src/**/*.{ts,tsx}\" \"packages/upload-core/src/**/*.ts\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.33.1"
+  "packageManager": "pnpm@10.33.1",
+  "devDependencies": {
+    "eslint": "^10.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3",
+    "typescript-eslint": "^8.59.0"
+  }
 }
