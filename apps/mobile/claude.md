@@ -3,11 +3,11 @@
 - Keep changes mobile-specific.
 - Do not duplicate shared upload logic that belongs in `packages/upload-core`.
 - Mobile-only concerns stay here:
-    - Expo pickers
-    - local file URI handling
-    - AsyncStorage history
-    - React Native UI
-    - mobile fetch client
+  - Expo pickers
+  - local file URI handling
+  - AsyncStorage history
+  - React Native UI
+  - mobile fetch client
 - Do not move native/platform code into `upload-core`.
 
 ## Integration Rules
@@ -19,8 +19,8 @@
 ## API Contract Warning
 
 - Known mismatch:
-    - clients use `DELETE /uploads/{id}`
-    - API exposes `POST /{uploadId}/cancel`
+  - clients use `DELETE /uploads/{id}`
+  - API exposes `POST /{uploadId}/cancel`
 - Check cancel behavior before changing mobile actions.
 
 ## Validation

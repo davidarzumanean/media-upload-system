@@ -26,7 +26,9 @@ export interface HistoryEntry {
 export interface UseUploadManagerReturn {
   snapshot: UploadManagerSnapshot
   speeds: Record<string, number>
-  addFiles: (files: Array<{ uri: string; name: string; size: number; mimeType: string }>) => void
+  addFiles: (
+    files: Array<{ uri: string; name: string; size: number; mimeType: string }>,
+  ) => void
   pause: (uploadId: string) => void
   resume: (uploadId: string) => void
   cancel: (uploadId: string) => void
@@ -37,11 +39,15 @@ export interface UseUploadManagerReturn {
 }
 
 export function useUploadManager(): UseUploadManagerReturn {
-  const [rawSnapshot, setRawSnapshot] = useState<UploadManagerSnapshot>({ sessions: {} })
+  const [rawSnapshot, setRawSnapshot] = useState<UploadManagerSnapshot>({
+    sessions: {},
+  })
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [hiddenUploadIds, setHiddenUploadIds] = useState<string[]>([])
   const [speeds, setSpeeds] = useState<Record<string, number>>({})
-  const speedTrackRef = useRef<Record<string, { bytes: number; ts: number; speed: number }>>({})
+  const speedTrackRef = useRef<
+    Record<string, { bytes: number; ts: number; speed: number }>
+  >({})
   const { addToast } = useToast()
 
   // Load persisted history on mount
@@ -73,7 +79,9 @@ export function useUploadManager(): UseUploadManagerReturn {
       const nextSpeeds: Record<string, number> = {}
       for (const [id, session] of Object.entries(snap.sessions)) {
         if (session.status === 'uploading') {
-          const uploadedBytes = Math.round(session.progress * session.fileDescriptor.size)
+          const uploadedBytes = Math.round(
+            session.progress * session.fileDescriptor.size,
+          )
           const prev = speedTrackRef.current[id]
           if (prev) {
             const dt = (now - prev.ts) / 1000
@@ -82,13 +90,21 @@ export function useUploadManager(): UseUploadManagerReturn {
               const instant = db / dt
               const smoothed = prev.speed * 0.6 + instant * 0.4
               nextSpeeds[id] = smoothed
-              speedTrackRef.current[id] = { bytes: uploadedBytes, ts: now, speed: smoothed }
+              speedTrackRef.current[id] = {
+                bytes: uploadedBytes,
+                ts: now,
+                speed: smoothed,
+              }
             } else {
               nextSpeeds[id] = prev.speed
               speedTrackRef.current[id] = { ...prev, bytes: uploadedBytes }
             }
           } else {
-            speedTrackRef.current[id] = { bytes: uploadedBytes, ts: now, speed: 0 }
+            speedTrackRef.current[id] = {
+              bytes: uploadedBytes,
+              ts: now,
+              speed: 0,
+            }
             nextSpeeds[id] = 0
           }
         } else {
@@ -103,7 +119,10 @@ export function useUploadManager(): UseUploadManagerReturn {
         const newEntries: HistoryEntry[] = []
 
         for (const session of Object.values(snap.sessions)) {
-          if (session.status === 'completed' && !existingIds.has(session.uploadId)) {
+          if (
+            session.status === 'completed' &&
+            !existingIds.has(session.uploadId)
+          ) {
             newEntries.push({
               id: session.uploadId,
               name: session.fileDescriptor.name,
@@ -126,7 +145,9 @@ export function useUploadManager(): UseUploadManagerReturn {
         if (newEntries.length === 0) return prev
         const updated = [...newEntries, ...prev]
         // Persist asynchronously — fire and forget
-        AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated)).catch(() => {})
+        AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated)).catch(
+          () => {},
+        )
         return updated
       })
     })
@@ -154,7 +175,12 @@ export function useUploadManager(): UseUploadManagerReturn {
 
   const addFiles = useCallback(
     (
-      files: Array<{ uri: string; name: string; size: number; mimeType: string }>,
+      files: Array<{
+        uri: string
+        name: string
+        size: number
+        mimeType: string
+      }>,
     ) => {
       const descriptors: FileDescriptor[] = files.map((f) => {
         const id = `${f.name}-${f.size}-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -194,7 +220,9 @@ export function useUploadManager(): UseUploadManagerReturn {
         })
 
         void manager.addFiles(valid).then(() => {
-          setTimeout(() => { void manager.start() }, 0)
+          setTimeout(() => {
+            void manager.start()
+          }, 0)
         })
       }
     },

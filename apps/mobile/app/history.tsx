@@ -13,7 +13,7 @@ import { colors } from '@media-upload/core'
 import { useUploadManagerContext } from '@/lib/upload-manager-context'
 import { formatFileSize } from '@media-upload/core'
 import type { HistoryEntry } from '@/hooks/useUploadManager'
-import {BASE_URL} from "@/lib/api-client";
+import { BASE_URL } from '@/lib/api-client'
 
 export default function HistoryScreen() {
   const { history, clearHistory } = useUploadManagerContext()
@@ -22,7 +22,10 @@ export default function HistoryScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
         {history.length > 0 && (
-          <TouchableOpacity onPress={clearHistory} accessibilityLabel="Clear all history">
+          <TouchableOpacity
+            onPress={clearHistory}
+            accessibilityLabel="Clear all history"
+          >
             <Text style={styles.clearBtn}>Clear all</Text>
           </TouchableOpacity>
         )}
@@ -83,11 +86,13 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
           {entry.name}
         </Text>
         <Text style={styles.itemDetail}>
-          {formatFileSize(entry.size)}  ·  {entry.mimeType}
+          {formatFileSize(entry.size)} · {entry.mimeType}
         </Text>
         <View style={styles.itemDateRow}>
           <Ionicons name="checkmark-circle" size={12} color={colors.success} />
-          <Text style={styles.itemDate}>{dateLabel} at {timeLabel}</Text>
+          <Text style={styles.itemDate}>
+            {dateLabel} at {timeLabel}
+          </Text>
         </View>
       </View>
     </View>

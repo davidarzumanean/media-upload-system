@@ -1,10 +1,17 @@
-import type { ApiClient, FileDescriptor, UploadStatus } from '@media-upload/core'
+import type {
+  ApiClient,
+  FileDescriptor,
+  UploadStatus,
+} from '@media-upload/core'
 
-export const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
+export const BASE_URL =
+  import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
 export function createApiClient(): ApiClient {
   return {
-    async initiate(file: FileDescriptor): Promise<{ uploadId: string; totalChunks: number }> {
+    async initiate(
+      file: FileDescriptor,
+    ): Promise<{ uploadId: string; totalChunks: number }> {
       const res = await fetch(`${BASE_URL}/uploads/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -15,7 +22,8 @@ export function createApiClient(): ApiClient {
           mimeType: file.mimeType,
         }),
       })
-      if (!res.ok) throw new Error(`Initiate failed: ${res.status} ${res.statusText}`)
+      if (!res.ok)
+        throw new Error(`Initiate failed: ${res.status} ${res.statusText}`)
       return res.json() as Promise<{ uploadId: string; totalChunks: number }>
     },
 
@@ -30,16 +38,22 @@ export function createApiClient(): ApiClient {
       form.append('chunk', blob)
       form.append('chunkIndex', String(chunkIndex))
 
-      const res = await fetch(`${BASE_URL}/uploads/${uploadId}/chunks/${chunkIndex}`, {
-        method: 'POST',
-        body: form,
-        signal,
-      })
-      if (!res.ok) throw new Error(`Chunk upload failed: ${res.status} ${res.statusText}`)
+      const res = await fetch(
+        `${BASE_URL}/uploads/${uploadId}/chunks/${chunkIndex}`,
+        {
+          method: 'POST',
+          body: form,
+          signal,
+        },
+      )
+      if (!res.ok)
+        throw new Error(`Chunk upload failed: ${res.status} ${res.statusText}`)
     },
 
     async finalize(uploadId: string): Promise<void> {
-      const res = await fetch(`${BASE_URL}/uploads/${uploadId}/finalize`, { method: 'POST' })
+      const res = await fetch(`${BASE_URL}/uploads/${uploadId}/finalize`, {
+        method: 'POST',
+      })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || `Finalize failed: ${res.status}`)
@@ -48,12 +62,15 @@ export function createApiClient(): ApiClient {
 
     async getStatus(uploadId: string): Promise<{ status: UploadStatus }> {
       const res = await fetch(`${BASE_URL}/uploads/${uploadId}/status`)
-      if (!res.ok) throw new Error(`Get status failed: ${res.status} ${res.statusText}`)
+      if (!res.ok)
+        throw new Error(`Get status failed: ${res.status} ${res.statusText}`)
       return res.json() as Promise<{ status: UploadStatus }>
     },
 
     async cancel(uploadId: string): Promise<void> {
-      const res = await fetch(`${BASE_URL}/uploads/${uploadId}`, { method: 'DELETE' })
+      const res = await fetch(`${BASE_URL}/uploads/${uploadId}`, {
+        method: 'DELETE',
+      })
       if (!res.ok && res.status !== 404) {
         throw new Error(`Cancel failed: ${res.status} ${res.statusText}`)
       }

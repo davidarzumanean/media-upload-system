@@ -52,19 +52,26 @@ function saveHistory(entries: HistoryEntry[]): void {
 const previewUrls = new Map<string, string>()
 
 export function useUploadManager(): UseUploadManagerReturn {
-  const [rawSnapshot, setRawSnapshot] = useState<UploadManagerSnapshot>({ sessions: {} })
+  const [rawSnapshot, setRawSnapshot] = useState<UploadManagerSnapshot>({
+    sessions: {},
+  })
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
   const { addToast } = useToast()
   const [hiddenUploadIds, setHiddenUploadIds] = useState<string[]>([])
   const [speeds, setSpeeds] = useState<Record<string, number>>({})
-  const speedTrackRef = useRef<Record<string, { bytes: number; ts: number; speed: number }>>({})
+  const speedTrackRef = useRef<
+    Record<string, { bytes: number; ts: number; speed: number }>
+  >({})
 
-  const [manager] = useState(() => new UploadManager({
-    apiClient: createApiClient(),
-    chunkReader,
-    maxConcurrent: 3,
-    maxRetries: 3,
-  }))
+  const [manager] = useState(
+    () =>
+      new UploadManager({
+        apiClient: createApiClient(),
+        chunkReader,
+        maxConcurrent: 3,
+        maxRetries: 3,
+      }),
+  )
 
   useEffect(() => {
     manager.setOnChange((snap) => {
@@ -75,7 +82,9 @@ export function useUploadManager(): UseUploadManagerReturn {
       const nextSpeeds: Record<string, number> = {}
       for (const [id, session] of Object.entries(snap.sessions)) {
         if (session.status === 'uploading') {
-          const uploadedBytes = Math.round(session.progress * session.fileDescriptor.size)
+          const uploadedBytes = Math.round(
+            session.progress * session.fileDescriptor.size,
+          )
           const prev = speedTrackRef.current[id]
           if (prev) {
             const dt = (now - prev.ts) / 1000 // seconds
@@ -84,13 +93,21 @@ export function useUploadManager(): UseUploadManagerReturn {
               const instant = db / dt
               const smoothed = prev.speed * 0.6 + instant * 0.4
               nextSpeeds[id] = smoothed
-              speedTrackRef.current[id] = { bytes: uploadedBytes, ts: now, speed: smoothed }
+              speedTrackRef.current[id] = {
+                bytes: uploadedBytes,
+                ts: now,
+                speed: smoothed,
+              }
             } else {
               nextSpeeds[id] = prev.speed
               speedTrackRef.current[id] = { ...prev, bytes: uploadedBytes }
             }
           } else {
-            speedTrackRef.current[id] = { bytes: uploadedBytes, ts: now, speed: 0 }
+            speedTrackRef.current[id] = {
+              bytes: uploadedBytes,
+              ts: now,
+              speed: 0,
+            }
             nextSpeeds[id] = 0
           }
         } else {
@@ -105,7 +122,10 @@ export function useUploadManager(): UseUploadManagerReturn {
         const newEntries: HistoryEntry[] = []
 
         for (const session of Object.values(snap.sessions)) {
-          if (session.status === 'completed' && !existingIds.has(session.uploadId)) {
+          if (
+            session.status === 'completed' &&
+            !existingIds.has(session.uploadId)
+          ) {
             // Capture the preview URL into history BEFORE we revoke it below
             const previewUri = session.fileDescriptor.previewUri
             newEntries.push({
@@ -159,7 +179,13 @@ export function useUploadManager(): UseUploadManagerReturn {
         const previewUri = isImage ? URL.createObjectURL(f) : undefined
         if (previewUri) previewUrls.set(id, previewUri)
 
-        const descriptor: FileDescriptor = { id, name: f.name, size: f.size, mimeType: f.type, previewUri }
+        const descriptor: FileDescriptor = {
+          id,
+          name: f.name,
+          size: f.size,
+          mimeType: f.type,
+          previewUri,
+        }
         registerFile(descriptor, f)
         return descriptor
       })
@@ -171,7 +197,7 @@ export function useUploadManager(): UseUploadManagerReturn {
         // Immediately inject queued-state sessions directly into React state
         // so file cards appear in the same render frame as the drop event,
         // without waiting for any async manager work.
-        setRawSnapshot(prev => {
+        setRawSnapshot((prev) => {
           const next = { ...prev.sessions }
           for (const descriptor of valid) {
             const queued: UploadSession = {
@@ -191,7 +217,9 @@ export function useUploadManager(): UseUploadManagerReturn {
         // Hand off to the manager (its emit will naturally overwrite the
         // queued placeholders once sessions transition to validating/uploading).
         void manager.addFiles(valid).then(() => {
-          setTimeout(() => { void manager.start() }, 0)
+          setTimeout(() => {
+            void manager.start()
+          }, 0)
         })
       }
     },
@@ -210,10 +238,13 @@ export function useUploadManager(): UseUploadManagerReturn {
       }
     }
   }, [manager])
-  const dismiss = useCallback((id: string) => {
-    setHiddenUploadIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
-    manager.remove(id)
-  }, [manager])
+  const dismiss = useCallback(
+    (id: string) => {
+      setHiddenUploadIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
+      manager.remove(id)
+    },
+    [manager],
+  )
 
   const clearAll = useCallback(() => {
     const snap = manager.getSnapshot()
@@ -226,7 +257,11 @@ export function useUploadManager(): UseUploadManagerReturn {
     })
 
     for (const [id, s] of Object.entries(snap.sessions)) {
-      if (s.status === 'completed' || s.status === 'canceled' || s.status === 'failed') {
+      if (
+        s.status === 'completed' ||
+        s.status === 'canceled' ||
+        s.status === 'failed'
+      ) {
         manager.remove(id)
       }
     }

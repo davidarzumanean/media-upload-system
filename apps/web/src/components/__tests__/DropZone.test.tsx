@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, act, waitFor } from '@testing-library/react'
 import { DropZone } from '../DropZone'
 
-
 // ── Mock react-dropzone ───────────────────────────────────────────────────────
 // Capture the callbacks the component passes to useDropzone so tests can
 // invoke them directly, avoiding jsdom drag-and-drop limitations.
@@ -63,9 +62,7 @@ describe('DropZone (full / idle)', () => {
 
   it('reflects the maxFiles prop in the helper text', () => {
     setupMock()
-    render(
-      <DropZone onFiles={vi.fn()} maxFiles={5} />,
-    )
+    render(<DropZone onFiles={vi.fn()} maxFiles={5} />)
     const dropzone = screen.getByRole('button', { name: /upload files/i })
     expect(dropzone).toHaveTextContent(/up to 5 files/i)
   })
@@ -87,9 +84,7 @@ describe('DropZone (full / idle)', () => {
 
   it('passes maxFiles to useDropzone', () => {
     setupMock()
-    render(
-      <DropZone onFiles={vi.fn()} maxFiles={3} />,
-    )
+    render(<DropZone onFiles={vi.fn()} maxFiles={3} />)
     expect(mockUseDropzone).toHaveBeenCalledWith(
       expect.objectContaining({ maxFiles: 3 }),
     )
@@ -133,9 +128,7 @@ describe('DropZone (full / idle)', () => {
 
   it('reflects maxFiles in the rejection message', async () => {
     const captured = setupMock()
-    render(
-      <DropZone onFiles={vi.fn()} maxFiles={3} />,
-    )
+    render(<DropZone onFiles={vi.fn()} maxFiles={3} />)
 
     await act(async () => captured.onDropRejected())
 
@@ -151,9 +144,7 @@ describe('DropZone (full / idle)', () => {
 describe('DropZone (compact strip)', () => {
   it('renders the "Add more files" label in compact mode', () => {
     setupMock()
-    render(
-      <DropZone onFiles={vi.fn()} compact />,
-    )
+    render(<DropZone onFiles={vi.fn()} compact />)
     expect(screen.getByText(/add more files/i)).toBeInTheDocument()
   })
 
@@ -167,4 +158,3 @@ describe('DropZone (compact strip)', () => {
     expect(onFiles).toHaveBeenCalledWith([file])
   })
 })
-

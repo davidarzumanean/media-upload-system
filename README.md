@@ -85,6 +85,7 @@ docker compose run --rm api php bin/phpunit
 ## Key Features
 
 ### Upload Engine (`packages/upload-core`)
+
 - Class-based `UploadManager` — framework-agnostic, event-driven orchestrator
 - Chunked upload with configurable 1 MB chunks
 - Global concurrency control (max 3 parallel uploads across all files)
@@ -94,6 +95,7 @@ docker compose run --rm api php bin/phpunit
 - File validation (type, size, quantity) before upload
 
 ### Web App (`apps/web`)
+
 - Drag-and-drop upload with react-dropzone
 - Real-time progress bars with smooth CSS transitions
 - Inline pause/resume/cancel controls per file
@@ -102,6 +104,7 @@ docker compose run --rm api php bin/phpunit
 - Responsive layout (desktop/tablet)
 
 ### Mobile App (`apps/mobile`)
+
 - Native gallery picker with multi-select (expo-image-picker)
 - Direct camera capture
 - Permission management for camera/gallery
@@ -109,6 +112,7 @@ docker compose run --rm api php bin/phpunit
 - Same upload engine as web via shared `@media-upload/core`
 
 ### API (`apps/api`)
+
 - RESTful chunked upload endpoints (initiate → chunks → finalize)
 - Magic number file type validation (php finfo)
 - MD5 checksum deduplication

@@ -23,7 +23,9 @@ beforeEach(() => vi.clearAllMocks())
 
 describe('UploadHistory — empty state', () => {
   it('renders nothing when the history list is empty', () => {
-    const { container } = render(<UploadHistory history={[]} onClear={vi.fn()} />)
+    const { container } = render(
+      <UploadHistory history={[]} onClear={vi.fn()} />,
+    )
     expect(container).toBeEmptyDOMElement()
   })
 })
@@ -73,7 +75,10 @@ describe('UploadHistory — with entries', () => {
   })
 
   it('shows a file count in the heading', () => {
-    const history = [makeEntry({ id: '1' }), makeEntry({ id: '2', name: 'b.jpg' })]
+    const history = [
+      makeEntry({ id: '1' }),
+      makeEntry({ id: '2', name: 'b.jpg' }),
+    ]
     render(<UploadHistory history={history} onClear={vi.fn()} />)
     expect(screen.getByText(/2 files/i)).toBeInTheDocument()
   })

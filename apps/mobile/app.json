@@ -28,9 +28,6 @@
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      "expo-image-picker"
-    ]
+    "plugins": ["expo-router", "expo-image-picker"]
   }
 }

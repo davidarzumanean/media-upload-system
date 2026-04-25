@@ -1,21 +1,21 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ─── Design tokens (mirrored from @media-upload/core theme.ts) ── */
 /*     Tailwind v4 @theme turns these into utility classes:         */
 /*     bg-primary, text-warning, border-error, etc.                 */
 @theme {
-  --color-primary:       #3B82F6;
-  --color-primary-light: #EFF6FF;
-  --color-primary-dark:  #2563EB;
+  --color-primary: #3b82f6;
+  --color-primary-light: #eff6ff;
+  --color-primary-dark: #2563eb;
 
-  --color-success:       #10B981;
-  --color-success-light: #ECFDF5;
+  --color-success: #10b981;
+  --color-success-light: #ecfdf5;
 
-  --color-warning:       #F59E0B;
-  --color-warning-light: #FFFBEB;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fffbeb;
 
-  --color-error:         #EF4444;
-  --color-error-light:   #FEF2F2;
+  --color-error: #ef4444;
+  --color-error-light: #fef2f2;
 }
 
 /* ─── Base ─────────────────────────────────────────────────────── */
@@ -69,8 +69,12 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Card entry — used on file cards */
@@ -90,8 +94,14 @@
 
 /* Toast slide-in from right */
 @keyframes toast-in {
-  from { opacity: 0; transform: translateX(calc(100% + 20px)); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(calc(100% + 20px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .animate-toast-in {
@@ -99,7 +109,15 @@
 }
 
 /* Stagger helper: nth-child delays (used on file cards) */
-.animate-in:nth-child(1) { animation-delay: 0ms;  }
-.animate-in:nth-child(2) { animation-delay: 40ms; }
-.animate-in:nth-child(3) { animation-delay: 80ms; }
-.animate-in:nth-child(n+4) { animation-delay: 120ms; }
+.animate-in:nth-child(1) {
+  animation-delay: 0ms;
+}
+.animate-in:nth-child(2) {
+  animation-delay: 40ms;
+}
+.animate-in:nth-child(3) {
+  animation-delay: 80ms;
+}
+.animate-in:nth-child(n + 4) {
+  animation-delay: 120ms;
+}

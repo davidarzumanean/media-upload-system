@@ -1,9 +1,9 @@
 import { formatFileSize, formatDate } from '@media-upload/core'
 import { useUploadManagerContext } from '../context/UploadManagerContext'
-import { BASE_URL } from "../lib/api-client.ts";
-import { ClockIcon } from "../components/icons/ClockIcon.tsx";
-import { CheckIcon } from "../components/icons/CheckIcon.tsx";
-import { FileThumbnail } from "../components/FileThumbnail.tsx";
+import { BASE_URL } from '../lib/api-client.ts'
+import { ClockIcon } from '../components/icons/ClockIcon.tsx'
+import { CheckIcon } from '../components/icons/CheckIcon.tsx'
+import { FileThumbnail } from '../components/FileThumbnail.tsx'
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -15,7 +15,9 @@ export function HistoryPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">Upload History</h1>
+          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+            Upload History
+          </h1>
           <p className="text-gray-400 text-sm mt-0.5">
             {history.length > 0
               ? `${history.length} file${history.length !== 1 ? 's' : ''} uploaded this session`
@@ -49,10 +51,17 @@ export function HistoryPage() {
                 key={`${entry.id}-${entry.completedAt}`}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/60 transition-colors"
               >
-                <FileThumbnail name={entry.name} mimeType={entry.mimeType} src={`${BASE_URL}/uploads/${entry.id}/file`} />
+                <FileThumbnail
+                  name={entry.name}
+                  mimeType={entry.mimeType}
+                  src={`${BASE_URL}/uploads/${entry.id}/file`}
+                />
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-800 font-medium truncate" title={entry.name}>
+                  <p
+                    className="text-sm text-gray-800 font-medium truncate"
+                    title={entry.name}
+                  >
                     {entry.name}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5 tabular-nums">

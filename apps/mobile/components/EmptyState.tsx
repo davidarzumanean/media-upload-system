@@ -8,11 +8,19 @@ interface EmptyStateProps {
   onDocument: () => void
 }
 
-export function EmptyState({ onGallery, onCamera, onDocument }: EmptyStateProps) {
+export function EmptyState({
+  onGallery,
+  onCamera,
+  onDocument,
+}: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <View style={styles.icon}>
-        <Ionicons name="cloud-upload-outline" size={48} color={colors.primary} />
+        <Ionicons
+          name="cloud-upload-outline"
+          size={48}
+          color={colors.primary}
+        />
       </View>
       <Text style={styles.title}>Upload media</Text>
       <Text style={styles.subtitle}>
@@ -29,12 +37,18 @@ export function EmptyState({ onGallery, onCamera, onDocument }: EmptyStateProps)
           <Text style={styles.secondaryBtnLabel}>Use Camera</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondaryBtn} onPress={onDocument}>
-          <Ionicons name="folder-open-outline" size={18} color={colors.primary} />
+          <Ionicons
+            name="folder-open-outline"
+            size={18}
+            color={colors.primary}
+          />
           <Text style={styles.secondaryBtnLabel}>Browse Files</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.hint}>Supports images and videos · up to 100 MB each</Text>
+      <Text style={styles.hint}>
+        Supports images and videos · up to 100 MB each
+      </Text>
     </View>
   )
 }

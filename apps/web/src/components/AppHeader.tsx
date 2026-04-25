@@ -1,15 +1,16 @@
-import {NavLink} from "react-router-dom";
-import {CloudUploadIcon} from "./icons/CloudUploadIcon.tsx";
+import { NavLink } from 'react-router-dom'
+import { CloudUploadIcon } from './icons/CloudUploadIcon.tsx'
 
 export function AppHeader() {
   return (
     <header className="bg-white sticky top-0 z-10">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-
         {/* Logo */}
         <div className="flex items-center gap-2.5">
           <CloudUploadIcon />
-          <span className="font-bold text-gray-900 tracking-tight">FileStream</span>
+          <span className="font-bold text-gray-900 tracking-tight">
+            FileStream
+          </span>
         </div>
 
         {/* Tab navigation */}

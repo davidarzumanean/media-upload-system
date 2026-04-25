@@ -37,7 +37,10 @@ describe('FileCard', () => {
   describe('status rendering', () => {
     it('renders Pause and Cancel buttons when uploading', () => {
       const { getByText } = render(
-        <FileCard session={makeSession({ status: 'uploading' })} {...defaultProps} />,
+        <FileCard
+          session={makeSession({ status: 'uploading' })}
+          {...defaultProps}
+        />,
       )
       expect(getByText('Pause')).toBeTruthy()
       expect(getByText('Cancel')).toBeTruthy()
@@ -45,7 +48,10 @@ describe('FileCard', () => {
 
     it('renders Resume and Cancel buttons when paused', () => {
       const { getByText } = render(
-        <FileCard session={makeSession({ status: 'paused' })} {...defaultProps} />,
+        <FileCard
+          session={makeSession({ status: 'paused' })}
+          {...defaultProps}
+        />,
       )
       expect(getByText('Resume')).toBeTruthy()
       expect(getByText('Cancel')).toBeTruthy()
@@ -53,7 +59,10 @@ describe('FileCard', () => {
 
     it('renders only Retry button when failed', () => {
       const { getByText, queryByText } = render(
-        <FileCard session={makeSession({ status: 'failed' })} {...defaultProps} />,
+        <FileCard
+          session={makeSession({ status: 'failed' })}
+          {...defaultProps}
+        />,
       )
       expect(getByText('Retry')).toBeTruthy()
       expect(queryByText('Pause')).toBeNull()
@@ -62,7 +71,10 @@ describe('FileCard', () => {
 
     it('renders no action buttons when completed', () => {
       const { queryByText } = render(
-        <FileCard session={makeSession({ status: 'completed' })} {...defaultProps} />,
+        <FileCard
+          session={makeSession({ status: 'completed' })}
+          {...defaultProps}
+        />,
       )
       expect(queryByText('Pause')).toBeNull()
       expect(queryByText('Cancel')).toBeNull()
@@ -83,7 +95,10 @@ describe('FileCard', () => {
 
     it('does not show dismiss × when uploading', () => {
       const { queryByLabelText } = render(
-        <FileCard session={makeSession({ status: 'uploading' })} {...defaultProps} />,
+        <FileCard
+          session={makeSession({ status: 'uploading' })}
+          {...defaultProps}
+        />,
       )
       expect(queryByLabelText('Dismiss')).toBeNull()
     })
@@ -92,7 +107,10 @@ describe('FileCard', () => {
   describe('action callbacks', () => {
     it('calls onPause with the upload id when Pause is pressed', () => {
       const { getByText } = render(
-        <FileCard session={makeSession({ status: 'uploading', uploadId: 'uid-1' })} {...defaultProps} />,
+        <FileCard
+          session={makeSession({ status: 'uploading', uploadId: 'uid-1' })}
+          {...defaultProps}
+        />,
       )
       fireEvent.press(getByText('Pause'))
       expect(defaultProps.onPause).toHaveBeenCalledWith('uid-1')
@@ -100,7 +118,10 @@ describe('FileCard', () => {
 
     it('calls onResume with the upload id when Resume is pressed', () => {
       const { getByText } = render(
-        <FileCard session={makeSession({ status: 'paused', uploadId: 'uid-2' })} {...defaultProps} />,
+        <FileCard
+          session={makeSession({ status: 'paused', uploadId: 'uid-2' })}
+          {...defaultProps}
+        />,
       )
       fireEvent.press(getByText('Resume'))
       expect(defaultProps.onResume).toHaveBeenCalledWith('uid-2')
@@ -108,7 +129,10 @@ describe('FileCard', () => {
 
     it('calls onCancel with the upload id when Cancel is pressed', () => {
       const { getByText } = render(
-        <FileCard session={makeSession({ status: 'uploading', uploadId: 'uid-3' })} {...defaultProps} />,
+        <FileCard
+          session={makeSession({ status: 'uploading', uploadId: 'uid-3' })}
+          {...defaultProps}
+        />,
       )
       fireEvent.press(getByText('Cancel'))
       expect(defaultProps.onCancel).toHaveBeenCalledWith('uid-3')
@@ -116,7 +140,10 @@ describe('FileCard', () => {
 
     it('calls onRetry with the upload id when Retry is pressed', () => {
       const { getByText } = render(
-        <FileCard session={makeSession({ status: 'failed', uploadId: 'uid-4' })} {...defaultProps} />,
+        <FileCard
+          session={makeSession({ status: 'failed', uploadId: 'uid-4' })}
+          {...defaultProps}
+        />,
       )
       fireEvent.press(getByText('Retry'))
       expect(defaultProps.onRetry).toHaveBeenCalledWith('uid-4')
@@ -124,9 +151,13 @@ describe('FileCard', () => {
 
     it('falls back to fileDescriptor.id when uploadId is empty', () => {
       const session = makeSession({ uploadId: '', status: 'uploading' })
-      const { getByText } = render(<FileCard session={session} {...defaultProps} />)
+      const { getByText } = render(
+        <FileCard session={session} {...defaultProps} />,
+      )
       fireEvent.press(getByText('Pause'))
-      expect(defaultProps.onPause).toHaveBeenCalledWith(session.fileDescriptor.id)
+      expect(defaultProps.onPause).toHaveBeenCalledWith(
+        session.fileDescriptor.id,
+      )
     })
   })
 
@@ -141,7 +172,9 @@ describe('FileCard', () => {
           previewUri: 'file:///preview.jpg',
         },
       })
-      const { getByLabelText } = render(<FileCard session={session} {...defaultProps} />)
+      const { getByLabelText } = render(
+        <FileCard session={session} {...defaultProps} />,
+      )
       expect(getByLabelText('Preview of photo.jpg')).toBeTruthy()
     })
 
@@ -154,7 +187,9 @@ describe('FileCard', () => {
           mimeType: 'application/pdf',
         },
       })
-      const { queryByLabelText } = render(<FileCard session={session} {...defaultProps} />)
+      const { queryByLabelText } = render(
+        <FileCard session={session} {...defaultProps} />,
+      )
       expect(queryByLabelText('Preview of report.pdf')).toBeNull()
     })
   })

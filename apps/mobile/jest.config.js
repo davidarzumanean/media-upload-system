@@ -11,7 +11,9 @@ module.exports = {
         // Prevent Babel from also loading babel.config.js (babel-preset-expo),
         // which would conflict with @react-native/babel-preset here.
         configFile: false,
-        presets: [['@react-native/babel-preset', { enableBabelRuntime: false }]],
+        presets: [
+          ['@react-native/babel-preset', { enableBabelRuntime: false }],
+        ],
       },
     ],
   },
@@ -33,4 +35,4 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(.pnpm|react-native|@react-native|@expo|expo|@testing-library)/)',
   ],
-};
+}

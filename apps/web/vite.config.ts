@@ -8,7 +8,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@media-upload/core': path.resolve(__dirname, '../../packages/upload-core/src/index.ts'),
+      '@media-upload/core': path.resolve(
+        __dirname,
+        '../../packages/upload-core/src/index.ts',
+      ),
     },
   },
   test: {

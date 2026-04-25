@@ -1,6 +1,11 @@
 import { createApiClient, BASE_URL } from '../api-client'
 
-function mockFetch(response: { ok: boolean; status?: number; statusText?: string; body?: unknown }) {
+function mockFetch(response: {
+  ok: boolean
+  status?: number
+  statusText?: string
+  body?: unknown
+}) {
   globalThis.fetch = jest.fn().mockResolvedValueOnce({
     ok: response.ok,
     status: response.status ?? 200,
@@ -43,7 +48,12 @@ describe('api-client', () => {
     it('throws on non-ok response', async () => {
       mockFetch({ ok: false, status: 422, statusText: 'Unprocessable Entity' })
       await expect(
-        client.initiate({ id: 'f', name: 'f.jpg', size: 1, mimeType: 'image/jpeg' }),
+        client.initiate({
+          id: 'f',
+          name: 'f.jpg',
+          size: 1,
+          mimeType: 'image/jpeg',
+        }),
       ).rejects.toThrow('422')
     })
   })
@@ -66,7 +76,9 @@ describe('api-client', () => {
 
     it('throws on non-ok response', async () => {
       mockFetch({ ok: false, status: 500, statusText: 'Server Error' })
-      await expect(client.uploadChunk('uid', 0, new ArrayBuffer(4))).rejects.toThrow('500')
+      await expect(
+        client.uploadChunk('uid', 0, new ArrayBuffer(4)),
+      ).rejects.toThrow('500')
     })
   })
 
@@ -83,7 +95,11 @@ describe('api-client', () => {
     })
 
     it('throws on non-ok response', async () => {
-      mockFetch({ ok: false, status: 409, body: { error: 'Already finalized' } })
+      mockFetch({
+        ok: false,
+        status: 409,
+        body: { error: 'Already finalized' },
+      })
       await expect(client.finalize('uid')).rejects.toThrow('Already finalized')
     })
   })
@@ -94,10 +110,9 @@ describe('api-client', () => {
 
       await client.cancel!('upload-77')
 
-      expect(fetch).toHaveBeenCalledWith(
-        `${BASE_URL}/uploads/upload-77`,
-        { method: 'DELETE' },
-      )
+      expect(fetch).toHaveBeenCalledWith(`${BASE_URL}/uploads/upload-77`, {
+        method: 'DELETE',
+      })
     })
 
     it('does not throw on 404 (already gone)', async () => {

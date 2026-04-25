@@ -6,10 +6,7 @@
  * Registered files are keyed by FileDescriptor.id so the UploadManager can
  * call chunkReader() without holding onto the raw file URI itself.
  */
-import {
-  readAsStringAsync,
-  EncodingType,
-} from 'expo-file-system/legacy'
+import { readAsStringAsync, EncodingType } from 'expo-file-system/legacy'
 import type { ChunkReader, FileDescriptor } from '@media-upload/core'
 
 // Maps fileDescriptor.id → local file URI (e.g. "file:///...").

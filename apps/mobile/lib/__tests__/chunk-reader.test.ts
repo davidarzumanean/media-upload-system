@@ -4,7 +4,9 @@ import type { FileDescriptor } from '@media-upload/core'
 
 const mockReadAsStringAsync = readAsStringAsync as jest.Mock
 
-function makeDescriptor(overrides: Partial<FileDescriptor> = {}): FileDescriptor {
+function makeDescriptor(
+  overrides: Partial<FileDescriptor> = {},
+): FileDescriptor {
   return {
     id: 'file-1',
     name: 'test.jpg',

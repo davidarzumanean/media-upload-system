@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+
+apps/api/vendor
+apps/api/var
+apps/mobile/.expo
+*.log

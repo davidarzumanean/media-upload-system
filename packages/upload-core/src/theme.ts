@@ -9,22 +9,22 @@
  */
 export const colors = {
   // ── Brand / primary ────────────────────────────────────────────────────────
-  primary:      '#2563EB',   // blue-600  — buttons, links, progress bars
-  primaryLight: '#EFF6FF',   // blue-50   — tinted backgrounds
-  primaryDark:  '#1e40af',   // blue-800  — button hover / active
+  primary: '#2563EB', // blue-600  — buttons, links, progress bars
+  primaryLight: '#EFF6FF', // blue-50   — tinted backgrounds
+  primaryDark: '#1e40af', // blue-800  — button hover / active
 
   // ── Semantic status ────────────────────────────────────────────────────────
-  success:      '#10B981',   // emerald-500 — completed state
-  successLight: '#ECFDF5',   // emerald-50  — completed badge background
+  success: '#10B981', // emerald-500 — completed state
+  successLight: '#ECFDF5', // emerald-50  — completed badge background
 
-  warning:      '#F59E0B',   // amber-500  — paused state
-  warningLight: '#FFFBEB',   // amber-50   — paused badge background
+  warning: '#F59E0B', // amber-500  — paused state
+  warningLight: '#FFFBEB', // amber-50   — paused badge background
 
-  error:        '#EF4444',   // red-500    — failed/error state
-  errorLight:   '#FEF2F2',   // red-50     — error badge background
+  error: '#EF4444', // red-500    — failed/error state
+  errorLight: '#FEF2F2', // red-50     — error badge background
 
   // ── Neutral grays ──────────────────────────────────────────────────────────
-  gray50:  '#F9FAFB',
+  gray50: '#F9FAFB',
   gray100: '#F3F4F6',
   gray200: '#E5E7EB',
   gray300: '#D1D5DB',

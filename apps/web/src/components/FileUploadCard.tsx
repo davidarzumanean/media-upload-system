@@ -8,7 +8,7 @@ import { PauseIcon } from './icons/PauseIcon'
 import { PlayIcon } from './icons/PlayIcon'
 import { RetryIcon } from './icons/RetryIcon'
 import { XMarkIcon } from './icons/XMarkIcon'
-import {FileThumbnail} from "./FileThumbnail.tsx";
+import { FileThumbnail } from './FileThumbnail.tsx'
 
 interface FileUploadCardProps {
   session: UploadSession
@@ -22,15 +22,47 @@ interface FileUploadCardProps {
 
 const statusConfig: Record<
   UploadStatus,
-  { label: string; badgeClass: string; progressColor: 'blue' | 'green' | 'yellow' | 'red' }
+  {
+    label: string
+    badgeClass: string
+    progressColor: 'blue' | 'green' | 'yellow' | 'red'
+  }
 > = {
-  queued:     { label: 'Starting…',  badgeClass: 'bg-blue-50 text-blue-500',        progressColor: 'blue'   },
-  validating: { label: 'Starting…',  badgeClass: 'bg-blue-50 text-blue-500',        progressColor: 'blue'   },
-  uploading:  { label: 'Uploading',  badgeClass: 'bg-blue-50 text-blue-500',        progressColor: 'blue'   },
-  paused:     { label: 'Paused',     badgeClass: 'bg-amber-50 text-amber-500',      progressColor: 'yellow' }, // amber-500 = warning #F59E0B
-  completed:  { label: 'Completed',  badgeClass: 'bg-emerald-50 text-emerald-500',  progressColor: 'green'  }, // emerald-500 = success #10B981
-  failed:     { label: 'Failed',     badgeClass: 'bg-red-50 text-red-500',          progressColor: 'red'    }, // red-500 = error #EF4444
-  canceled:   { label: 'Canceled',   badgeClass: 'bg-gray-100 text-gray-400',       progressColor: 'red'    },
+  queued: {
+    label: 'Starting…',
+    badgeClass: 'bg-blue-50 text-blue-500',
+    progressColor: 'blue',
+  },
+  validating: {
+    label: 'Starting…',
+    badgeClass: 'bg-blue-50 text-blue-500',
+    progressColor: 'blue',
+  },
+  uploading: {
+    label: 'Uploading',
+    badgeClass: 'bg-blue-50 text-blue-500',
+    progressColor: 'blue',
+  },
+  paused: {
+    label: 'Paused',
+    badgeClass: 'bg-amber-50 text-amber-500',
+    progressColor: 'yellow',
+  }, // amber-500 = warning #F59E0B
+  completed: {
+    label: 'Completed',
+    badgeClass: 'bg-emerald-50 text-emerald-500',
+    progressColor: 'green',
+  }, // emerald-500 = success #10B981
+  failed: {
+    label: 'Failed',
+    badgeClass: 'bg-red-50 text-red-500',
+    progressColor: 'red',
+  }, // red-500 = error #EF4444
+  canceled: {
+    label: 'Canceled',
+    badgeClass: 'bg-gray-100 text-gray-400',
+    progressColor: 'red',
+  },
 }
 
 // ── Reusable icon button ─────────────────────────────────────────────────────
@@ -42,13 +74,18 @@ interface IconButtonProps {
   variant?: 'default' | 'primary' | 'danger'
 }
 
-function IconButton({ onClick, label, icon, variant = 'default' }: IconButtonProps) {
+function IconButton({
+  onClick,
+  label,
+  icon,
+  variant = 'default',
+}: IconButtonProps) {
   const variantClass =
     variant === 'primary'
       ? 'text-blue-500 hover:text-blue-600 hover:bg-blue-50'
       : variant === 'danger'
-      ? 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+        ? 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
 
   return (
     <button
@@ -63,7 +100,15 @@ function IconButton({ onClick, label, icon, variant = 'default' }: IconButtonPro
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function FileUploadCard({ session, speed = 0, onPause, onResume, onCancel, onRetry, onDismiss }: FileUploadCardProps) {
+export function FileUploadCard({
+  session,
+  speed = 0,
+  onPause,
+  onResume,
+  onCancel,
+  onRetry,
+  onDismiss,
+}: FileUploadCardProps) {
   const { fileDescriptor: file, status, progress, error } = session
 
   // ── Progress bar visibility ───────────────────────────────────────────────
@@ -81,7 +126,10 @@ export function FileUploadCard({ session, speed = 0, onPause, onResume, onCancel
     }
   }, [status])
 
-  const barFaded = status === 'failed' || status === 'canceled' || (status === 'completed' && completedDelay)
+  const barFaded =
+    status === 'failed' ||
+    status === 'canceled' ||
+    (status === 'completed' && completedDelay)
   // ─────────────────────────────────────────────────────────────────────────
 
   const cfg = statusConfig[status]
@@ -95,11 +143,15 @@ export function FileUploadCard({ session, speed = 0, onPause, onResume, onCancel
   const hasBarRow = status !== 'queued'
   // Whether to actually render the ProgressBar inside the row.
   const renderBar =
-    status === 'uploading' || status === 'paused' || status === 'validating' || status === 'completed'
+    status === 'uploading' ||
+    status === 'paused' ||
+    status === 'validating' ||
+    status === 'completed'
   const showPct = status === 'uploading' || status === 'paused'
   const showTransferred = status === 'uploading' || status === 'paused'
 
-  const canDismiss = status === 'completed' || status === 'canceled' || status === 'failed'
+  const canDismiss =
+    status === 'completed' || status === 'canceled' || status === 'failed'
   const canPause = status === 'uploading'
   const canResume = status === 'paused'
   const canCancel = status === 'uploading' || status === 'paused'
@@ -111,14 +163,20 @@ export function FileUploadCard({ session, speed = 0, onPause, onResume, onCancel
       aria-label={`${file.name} — ${cfg.label}`}
     >
       {/* ── Thumbnail ── */}
-      <FileThumbnail name={file.name} mimeType={file.mimeType} src={file.previewUri} />
+      <FileThumbnail
+        name={file.name}
+        mimeType={file.mimeType}
+        src={file.previewUri}
+      />
 
       {/* ── Content ── */}
       <div className="flex-1 min-w-0 space-y-1">
-
         {/* Row 1: filename + badge + dismiss */}
         <div className="flex items-center gap-2">
-          <p className="flex-1 min-w-0 text-sm font-medium text-gray-800 truncate" title={file.name}>
+          <p
+            className="flex-1 min-w-0 text-sm font-medium text-gray-800 truncate"
+            title={file.name}
+          >
             {file.name}
           </p>
           <span
@@ -150,11 +208,11 @@ export function FileUploadCard({ session, speed = 0, onPause, onResume, onCancel
                 <span className="mx-1 text-gray-300">/</span>
                 {formatFileSize(file.size)}
                 {speed > 512 && (
-                  <span className="ml-2 text-gray-500">{formatSpeed(speed)}</span>
+                  <span className="ml-2 text-gray-500">
+                    {formatSpeed(speed)}
+                  </span>
                 )}
-                {showPct && (
-                  <span className="ml-2 font-medium">{pct}%</span>
-                )}
+                {showPct && <span className="ml-2 font-medium">{pct}%</span>}
               </>
             ) : (
               <>

@@ -10,7 +10,11 @@ interface PickerButtonProps {
 
 export function PickerButton({ icon, label, onPress }: PickerButtonProps) {
   return (
-    <TouchableOpacity style={styles.btn} onPress={onPress} accessibilityLabel={label}>
+    <TouchableOpacity
+      style={styles.btn}
+      onPress={onPress}
+      accessibilityLabel={label}
+    >
       <Ionicons name={icon} size={20} color={colors.primary} />
       <Text style={styles.label}>{label}</Text>
     </TouchableOpacity>

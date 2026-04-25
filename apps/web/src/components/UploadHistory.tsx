@@ -8,8 +8,19 @@ interface UploadHistoryProps {
 
 function CheckIcon() {
   return (
-    <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <svg
+      className="w-4 h-4 text-emerald-500 shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
     </svg>
   )
 }
@@ -18,7 +29,10 @@ export function UploadHistory({ history, onClear }: UploadHistoryProps) {
   if (history.length === 0) return null
 
   return (
-    <section aria-label="Upload history" className="animate-in bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <section
+      aria-label="Upload history"
+      className="animate-in bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+    >
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
         <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
           History
@@ -43,7 +57,10 @@ export function UploadHistory({ history, onClear }: UploadHistoryProps) {
           >
             <CheckIcon />
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-700 truncate font-medium" title={entry.name}>
+              <p
+                className="text-sm text-gray-700 truncate font-medium"
+                title={entry.name}
+              >
                 {entry.name}
               </p>
               <p className="text-xs text-gray-400 mt-0.5">

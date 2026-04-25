@@ -7,16 +7,25 @@ export type {
   ChunkReader,
   ApiClient,
   ValidationError,
-} from './types.js';
+} from './types.js'
 
-export { DEFAULT_MAX_SIZE_BYTES, DEFAULT_MAX_FILES, validateFiles } from './validation.js';
-export type { ValidationOptions, ValidationResult } from './validation.js';
+export {
+  DEFAULT_MAX_SIZE_BYTES,
+  DEFAULT_MAX_FILES,
+  validateFiles,
+} from './validation.js'
+export type { ValidationOptions, ValidationResult } from './validation.js'
 
-export { CHUNK_SIZE, calculateTotalChunks, getRetryDelay } from './chunking.js';
+export { CHUNK_SIZE, calculateTotalChunks, getRetryDelay } from './chunking.js'
 
-export { UploadManager } from './upload-manager.js';
-export type { UploadManagerOptions } from './upload-manager.js';
+export { UploadManager } from './upload-manager.js'
+export type { UploadManagerOptions } from './upload-manager.js'
 
-export { formatFileSize, formatSpeed, formatDuration, formatDate } from './format.js';
+export {
+  formatFileSize,
+  formatSpeed,
+  formatDuration,
+  formatDate,
+} from './format.js'
 
-export { colors } from './theme.js';
+export { colors } from './theme.js'

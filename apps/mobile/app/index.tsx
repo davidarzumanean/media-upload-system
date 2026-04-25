@@ -52,12 +52,16 @@ export default function UploadScreen() {
     const asset = result.assets[0]
     const mimeType = asset.mimeType ?? 'image/jpeg'
     const ext = mimeType.startsWith('video/') ? mimeType.split('/')[1] : 'jpg'
-    addFiles([{
-      uri: asset.uri,
-      name: asset.fileName ?? `${mimeType.startsWith('video/') ? 'video' : 'photo'}-${Date.now()}.${ext}`,
-      size: asset.fileSize ?? 0,
-      mimeType,
-    }])
+    addFiles([
+      {
+        uri: asset.uri,
+        name:
+          asset.fileName ??
+          `${mimeType.startsWith('video/') ? 'video' : 'photo'}-${Date.now()}.${ext}`,
+        size: asset.fileSize ?? 0,
+        mimeType,
+      },
+    ])
   }
 
   async function pickDocument() {
@@ -118,9 +122,21 @@ export default function UploadScreen() {
 
       {sessions.length > 0 && (
         <View style={styles.fabRow}>
-          <PickerButton icon="images" label="Gallery" onPress={pickFromGallery} />
-          <PickerButton icon="camera-outline" label="Camera" onPress={takePhoto} />
-          <PickerButton icon="folder-open" label="Files" onPress={pickDocument} />
+          <PickerButton
+            icon="images"
+            label="Gallery"
+            onPress={pickFromGallery}
+          />
+          <PickerButton
+            icon="camera-outline"
+            label="Camera"
+            onPress={takePhoto}
+          />
+          <PickerButton
+            icon="folder-open"
+            label="Files"
+            onPress={pickDocument}
+          />
         </View>
       )}
     </SafeAreaView>

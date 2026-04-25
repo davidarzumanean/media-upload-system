@@ -10,7 +10,9 @@ vi.mock('../../context/ToastContext', () => ({
 
 vi.mock('../../lib/api-client', () => ({
   createApiClient: () => ({
-    initiate: vi.fn().mockResolvedValue({ uploadId: 'server-uid', totalChunks: 1 }),
+    initiate: vi
+      .fn()
+      .mockResolvedValue({ uploadId: 'server-uid', totalChunks: 1 }),
     uploadChunk: vi.fn().mockResolvedValue(undefined),
     finalize: vi.fn().mockResolvedValue(undefined),
     getStatus: vi.fn().mockResolvedValue({ status: 'uploading' }),
@@ -64,7 +66,10 @@ describe('useUploadManager', () => {
 
     const sessions = Object.values(result.current.snapshot.sessions)
     expect(sessions).toHaveLength(2)
-    expect(sessions.map((s) => s.fileDescriptor.name).sort()).toEqual(['a.jpg', 'b.mp4'])
+    expect(sessions.map((s) => s.fileDescriptor.name).sort()).toEqual([
+      'a.jpg',
+      'b.mp4',
+    ])
     // All injected as 'queued' before the async manager work runs
     expect(sessions.every((s) => s.status === 'queued')).toBe(true)
   })
@@ -116,7 +121,13 @@ describe('useUploadManager', () => {
     localStorage.setItem(
       'media-upload-history',
       JSON.stringify([
-        { id: '1', name: 'old.jpg', size: 100, mimeType: 'image/jpeg', completedAt: '2024-01-01T00:00:00Z' },
+        {
+          id: '1',
+          name: 'old.jpg',
+          size: 100,
+          mimeType: 'image/jpeg',
+          completedAt: '2024-01-01T00:00:00Z',
+        },
       ]),
     )
 

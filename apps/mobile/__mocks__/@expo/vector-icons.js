@@ -1,9 +1,9 @@
-const React = require('react');
-const { Text } = require('react-native');
+const React = require('react')
+const { Text } = require('react-native')
 
 const Ionicons = ({ name, ...rest }) =>
-  React.createElement(Text, { ...rest, testID: `icon-${name}` });
+  React.createElement(Text, { ...rest, testID: `icon-${name}` })
 
-Ionicons.glyphMap = {};
+Ionicons.glyphMap = {}
 
-module.exports = { Ionicons };
+module.exports = { Ionicons }

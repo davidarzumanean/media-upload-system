@@ -52,7 +52,10 @@ describe('HistoryPage — thumbnail rendering', () => {
 
     const img = container.querySelector('img')
     expect(img).not.toBeNull()
-    expect(img).toHaveAttribute('src', 'http://localhost:8000/api/uploads/uid-image/file')
+    expect(img).toHaveAttribute(
+      'src',
+      'http://localhost:8000/api/uploads/uid-image/file',
+    )
   })
 
   it('does not render an img for video entries', () => {
@@ -74,8 +77,14 @@ describe('HistoryPage — thumbnail rendering', () => {
 
     const images = container.querySelectorAll('img')
     expect(images).toHaveLength(2)
-    expect(images[0]).toHaveAttribute('src', 'http://localhost:8000/api/uploads/img-1/file')
-    expect(images[1]).toHaveAttribute('src', 'http://localhost:8000/api/uploads/img-2/file')
+    expect(images[0]).toHaveAttribute(
+      'src',
+      'http://localhost:8000/api/uploads/img-1/file',
+    )
+    expect(images[1]).toHaveAttribute(
+      'src',
+      'http://localhost:8000/api/uploads/img-2/file',
+    )
   })
 
   it('falls back to no image when onError fires', () => {

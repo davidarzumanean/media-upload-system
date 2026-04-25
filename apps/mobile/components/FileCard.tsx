@@ -1,10 +1,4 @@
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native'
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import type { UploadSession } from '@media-upload/core'
 import { formatFileSize, formatSpeed, colors } from '@media-upload/core'
@@ -34,7 +28,8 @@ export function FileCard({
   const id = uploadId || fd.id
   const pct = Math.round(progress * 100)
 
-  const showProgress = status === 'uploading' || status === 'paused' || status === 'completed'
+  const showProgress =
+    status === 'uploading' || status === 'paused' || status === 'completed'
   const showProgressBar = status === 'uploading' || status === 'paused'
 
   return (
@@ -60,12 +55,18 @@ export function FileCard({
 
         <View style={styles.meta}>
           <View style={styles.titleRow}>
-            <Text style={styles.filename} numberOfLines={1} ellipsizeMode="middle">
+            <Text
+              style={styles.filename}
+              numberOfLines={1}
+              ellipsizeMode="middle"
+            >
               {fd.name}
             </Text>
             <StatusBadge status={status} />
             {/* Dismiss button for completed / failed / canceled */}
-            {(status === 'completed' || status === 'failed' || status === 'canceled') && (
+            {(status === 'completed' ||
+              status === 'failed' ||
+              status === 'canceled') && (
               <TouchableOpacity
                 onPress={() => onDismiss(id)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -80,7 +81,9 @@ export function FileCard({
             {formatFileSize(fd.size)}
             {fd.mimeType ? `  ·  ${fd.mimeType}` : ''}
             {showProgress && status !== 'completed' ? `  ·  ${pct}%` : ''}
-            {status === 'uploading' && speed ? `  ·  ${formatSpeed(speed)}` : ''}
+            {status === 'uploading' && speed
+              ? `  ·  ${formatSpeed(speed)}`
+              : ''}
           </Text>
         </View>
       </View>
@@ -104,18 +107,38 @@ export function FileCard({
       <View style={styles.actions}>
         {status === 'uploading' && (
           <>
-            <ActionButton label="Pause"  variant="pause"  onPress={() => onPause(id)}  />
-            <ActionButton label="Cancel" variant="cancel" onPress={() => onCancel(id)} />
+            <ActionButton
+              label="Pause"
+              variant="pause"
+              onPress={() => onPause(id)}
+            />
+            <ActionButton
+              label="Cancel"
+              variant="cancel"
+              onPress={() => onCancel(id)}
+            />
           </>
         )}
         {status === 'paused' && (
           <>
-            <ActionButton label="Resume" variant="resume" onPress={() => onResume(id)} />
-            <ActionButton label="Cancel" variant="cancel" onPress={() => onCancel(id)} />
+            <ActionButton
+              label="Resume"
+              variant="resume"
+              onPress={() => onResume(id)}
+            />
+            <ActionButton
+              label="Cancel"
+              variant="cancel"
+              onPress={() => onCancel(id)}
+            />
           </>
         )}
         {status === 'failed' && (
-          <ActionButton label="Retry" variant="retry" onPress={() => onRetry(id)} />
+          <ActionButton
+            label="Retry"
+            variant="retry"
+            onPress={() => onRetry(id)}
+          />
         )}
       </View>
     </View>
@@ -124,11 +147,14 @@ export function FileCard({
 
 type ActionVariant = 'pause' | 'resume' | 'cancel' | 'retry'
 
-const ACTION_CONFIG: Record<ActionVariant, { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
-  pause:  { icon: 'pause',   color: colors.warning, bg: colors.warningLight },
-  resume: { icon: 'play',    color: colors.primary, bg: colors.primaryLight },
-  cancel: { icon: 'close',   color: colors.error,   bg: colors.errorLight   },
-  retry:  { icon: 'refresh', color: colors.primary, bg: colors.primaryLight },
+const ACTION_CONFIG: Record<
+  ActionVariant,
+  { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }
+> = {
+  pause: { icon: 'pause', color: colors.warning, bg: colors.warningLight },
+  resume: { icon: 'play', color: colors.primary, bg: colors.primaryLight },
+  cancel: { icon: 'close', color: colors.error, bg: colors.errorLight },
+  retry: { icon: 'refresh', color: colors.primary, bg: colors.primaryLight },
 }
 
 function ActionButton({
@@ -142,7 +168,11 @@ function ActionButton({
 }) {
   const isCancel = variant === 'cancel'
   const isPause = variant === 'pause'
-  const color = isCancel ? colors.error : isPause ? colors.gray500 : colors.primary
+  const color = isCancel
+    ? colors.error
+    : isPause
+      ? colors.gray500
+      : colors.primary
 
   return (
     <TouchableOpacity

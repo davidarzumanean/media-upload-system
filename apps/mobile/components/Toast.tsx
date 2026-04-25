@@ -1,9 +1,15 @@
 import { useEffect, useRef } from 'react'
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import {
+  Animated,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useToastState, type ToastItem } from '@/context/ToastContext'
-import {colors} from "@media-upload/core";
+import { colors } from '@media-upload/core'
 
 function AnimatedToast({
   toast,
@@ -32,10 +38,18 @@ function AnimatedToast({
   }, [opacity, translateY])
 
   return (
-    <Animated.View style={[styles.toast, { transform: [{ translateY }], opacity }]}>
+    <Animated.View
+      style={[styles.toast, { transform: [{ translateY }], opacity }]}
+    >
       <Ionicons name="warning" size={16} color="#DC2626" style={styles.icon} />
-      <Text style={styles.message} numberOfLines={3}>{toast.message}</Text>
-      <TouchableOpacity onPress={onDismiss} hitSlop={8} accessibilityLabel="Dismiss">
+      <Text style={styles.message} numberOfLines={3}>
+        {toast.message}
+      </Text>
+      <TouchableOpacity
+        onPress={onDismiss}
+        hitSlop={8}
+        accessibilityLabel="Dismiss"
+      >
         <Ionicons name="close" size={16} color="#F87171" />
       </TouchableOpacity>
     </Animated.View>
@@ -53,7 +67,7 @@ export function Toast() {
       pointerEvents="box-none"
       style={[styles.container, { top: insets.top + 8 }]}
     >
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <AnimatedToast
           key={toast.id}
           toast={toast}

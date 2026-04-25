@@ -63,13 +63,19 @@ describe('useUploadManager', () => {
     const { result } = renderHook(() => useUploadManager())
     const instance = getMockInstance()
 
-    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+    const onChange: (snap: unknown) => void =
+      instance.setOnChange.mock.calls[0][0]
 
     const newSnap = {
       sessions: {
         'uid-1': {
           uploadId: 'uid-1',
-          fileDescriptor: { id: 'fd-1', name: 'a.jpg', size: 100, mimeType: 'image/jpeg' },
+          fileDescriptor: {
+            id: 'fd-1',
+            name: 'a.jpg',
+            size: 100,
+            mimeType: 'image/jpeg',
+          },
           totalChunks: 1,
           uploadedChunks: [],
           status: 'uploading',

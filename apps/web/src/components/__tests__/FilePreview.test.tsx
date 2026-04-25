@@ -57,7 +57,14 @@ describe('FilePreview — rendering', () => {
 
     for (const [status, label] of cases) {
       const { unmount } = render(
-        <FilePreview session={makeSession({ status, progress: status === 'completed' ? 1 : 0.3, error: status === 'failed' ? 'err' : undefined })} {...defaultProps()} />,
+        <FilePreview
+          session={makeSession({
+            status,
+            progress: status === 'completed' ? 1 : 0.3,
+            error: status === 'failed' ? 'err' : undefined,
+          })}
+          {...defaultProps()}
+        />,
       )
       expect(screen.getByText(label)).toBeInTheDocument()
       unmount()
@@ -67,7 +74,10 @@ describe('FilePreview — rendering', () => {
   it('shows the error message when the session has an error', () => {
     render(
       <FilePreview
-        session={makeSession({ status: 'failed', error: 'Connection timed out' })}
+        session={makeSession({
+          status: 'failed',
+          error: 'Connection timed out',
+        })}
         {...defaultProps()}
       />,
     )
@@ -91,21 +101,35 @@ describe('FilePreview — rendering', () => {
 
 describe('FilePreview — progress bar', () => {
   it('renders a progressbar during uploading with the correct value', () => {
-    render(<FilePreview session={makeSession({ status: 'uploading', progress: 0.6 })} {...defaultProps()} />)
+    render(
+      <FilePreview
+        session={makeSession({ status: 'uploading', progress: 0.6 })}
+        {...defaultProps()}
+      />,
+    )
     const bar = screen.getByRole('progressbar')
     expect(bar).toBeInTheDocument()
     expect(bar).toHaveAttribute('aria-valuenow', '60')
   })
 
   it('renders a progressbar during paused', () => {
-    render(<FilePreview session={makeSession({ status: 'paused', progress: 0.3 })} {...defaultProps()} />)
+    render(
+      <FilePreview
+        session={makeSession({ status: 'paused', progress: 0.3 })}
+        {...defaultProps()}
+      />,
+    )
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
   it('renders a progressbar at 100% when completed', () => {
     render(
       <FilePreview
-        session={makeSession({ status: 'completed', progress: 1, uploadedChunks: [0, 1, 2] })}
+        session={makeSession({
+          status: 'completed',
+          progress: 1,
+          uploadedChunks: [0, 1, 2],
+        })}
         {...defaultProps()}
       />,
     )
@@ -125,7 +149,12 @@ describe('FilePreview — progress bar', () => {
   })
 
   it('does not render a progressbar when the status is canceled', () => {
-    render(<FilePreview session={makeSession({ status: 'canceled' })} {...defaultProps()} />)
+    render(
+      <FilePreview
+        session={makeSession({ status: 'canceled' })}
+        {...defaultProps()}
+      />,
+    )
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
   })
 })
@@ -134,29 +163,57 @@ describe('FilePreview — progress bar', () => {
 
 describe('FilePreview — buttons while uploading', () => {
   it('shows pause and cancel buttons', () => {
-    render(<FilePreview session={makeSession({ status: 'uploading' })} {...defaultProps()} />)
+    render(
+      <FilePreview
+        session={makeSession({ status: 'uploading' })}
+        {...defaultProps()}
+      />,
+    )
     expect(screen.getByRole('button', { name: /pause/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
   })
 
   it('does not show resume or retry or dismiss buttons', () => {
-    render(<FilePreview session={makeSession({ status: 'uploading' })} {...defaultProps()} />)
-    expect(screen.queryByRole('button', { name: /resume/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /dismiss/i })).not.toBeInTheDocument()
+    render(
+      <FilePreview
+        session={makeSession({ status: 'uploading' })}
+        {...defaultProps()}
+      />,
+    )
+    expect(
+      screen.queryByRole('button', { name: /resume/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /retry/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /dismiss/i }),
+    ).not.toBeInTheDocument()
   })
 })
 
 describe('FilePreview — buttons while paused', () => {
   it('shows resume and cancel buttons', () => {
-    render(<FilePreview session={makeSession({ status: 'paused', progress: 0.3 })} {...defaultProps()} />)
+    render(
+      <FilePreview
+        session={makeSession({ status: 'paused', progress: 0.3 })}
+        {...defaultProps()}
+      />,
+    )
     expect(screen.getByRole('button', { name: /resume/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
   })
 
   it('does not show the pause button', () => {
-    render(<FilePreview session={makeSession({ status: 'paused', progress: 0.3 })} {...defaultProps()} />)
-    expect(screen.queryByRole('button', { name: /pause/i })).not.toBeInTheDocument()
+    render(
+      <FilePreview
+        session={makeSession({ status: 'paused', progress: 0.3 })}
+        {...defaultProps()}
+      />,
+    )
+    expect(
+      screen.queryByRole('button', { name: /pause/i }),
+    ).not.toBeInTheDocument()
   })
 })
 
@@ -169,10 +226,18 @@ describe('FilePreview — buttons when completed', () => {
       />,
     )
     expect(screen.getByRole('button', { name: /dismiss/i })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /pause/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /resume/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /cancel/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /pause/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /resume/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /retry/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /cancel/i }),
+    ).not.toBeInTheDocument()
   })
 })
 
@@ -195,9 +260,15 @@ describe('FilePreview — buttons when failed', () => {
         {...defaultProps()}
       />,
     )
-    expect(screen.queryByRole('button', { name: /pause/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /resume/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /cancel/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /pause/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /resume/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /cancel/i }),
+    ).not.toBeInTheDocument()
   })
 })
 
@@ -208,7 +279,11 @@ describe('FilePreview — callbacks', () => {
     const onPause = vi.fn()
     const user = userEvent.setup()
     render(
-      <FilePreview session={makeSession({ status: 'uploading' })} {...defaultProps()} onPause={onPause} />,
+      <FilePreview
+        session={makeSession({ status: 'uploading' })}
+        {...defaultProps()}
+        onPause={onPause}
+      />,
     )
     await user.click(screen.getByRole('button', { name: /pause/i }))
     expect(onPause).toHaveBeenCalledWith('uid-test')
@@ -232,7 +307,11 @@ describe('FilePreview — callbacks', () => {
     const onCancel = vi.fn()
     const user = userEvent.setup()
     render(
-      <FilePreview session={makeSession({ status: 'uploading' })} {...defaultProps()} onCancel={onCancel} />,
+      <FilePreview
+        session={makeSession({ status: 'uploading' })}
+        {...defaultProps()}
+        onCancel={onCancel}
+      />,
     )
     await user.click(screen.getByRole('button', { name: /cancel/i }))
     expect(onCancel).toHaveBeenCalledWith('uid-test')
@@ -271,7 +350,11 @@ describe('FilePreview — callbacks', () => {
     const user = userEvent.setup()
     render(
       <FilePreview
-        session={makeSession({ uploadId: '', status: 'completed', progress: 1 })}
+        session={makeSession({
+          uploadId: '',
+          status: 'completed',
+          progress: 1,
+        })}
         {...defaultProps()}
         onDismiss={onDismiss}
       />,

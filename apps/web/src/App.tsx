@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { UploadManagerProvider } from './context/UploadManagerContext'
 import { ToastProvider } from './context/ToastContext'
 import { Toast } from './components/Toast'
-import { AppHeader } from "./components/AppHeader.tsx";
+import { AppHeader } from './components/AppHeader.tsx'
 
 export default function App() {
   return (

@@ -5,46 +5,46 @@ import type {
   FileDescriptor,
   UploadManagerSnapshot,
   UploadSession,
-} from './types.js';
-import { CHUNK_SIZE, calculateTotalChunks, getRetryDelay } from './chunking.js';
+} from './types.js'
+import { CHUNK_SIZE, calculateTotalChunks, getRetryDelay } from './chunking.js'
 
 export interface UploadManagerOptions {
-  apiClient: ApiClient;
-  chunkReader: ChunkReader;
-  maxConcurrent?: number;
-  maxRetries?: number;
+  apiClient: ApiClient
+  chunkReader: ChunkReader
+  maxConcurrent?: number
+  maxRetries?: number
   /** Override retry delay for testing. Defaults to exponential backoff. */
-  retryDelay?: (attempt: number) => number;
+  retryDelay?: (attempt: number) => number
 }
 
 interface InFlightChunk {
-  uploadId: string;
-  chunkIndex: number;
-  abortController: AbortController;
+  uploadId: string
+  chunkIndex: number
+  abortController: AbortController
 }
 
 export class UploadManager {
-  private readonly apiClient: ApiClient;
-  private readonly chunkReader: ChunkReader;
-  private readonly maxConcurrent: number;
-  private readonly maxRetries: number;
-  private readonly retryDelay: (attempt: number) => number;
+  private readonly apiClient: ApiClient
+  private readonly chunkReader: ChunkReader
+  private readonly maxConcurrent: number
+  private readonly maxRetries: number
+  private readonly retryDelay: (attempt: number) => number
 
-  private sessions: Map<string, UploadSession> = new Map();
-  private queue: ChunkTask[] = [];
-  private inFlight: InFlightChunk[] = [];
-  private onChange?: (snapshot: UploadManagerSnapshot) => void;
+  private sessions: Map<string, UploadSession> = new Map()
+  private queue: ChunkTask[] = []
+  private inFlight: InFlightChunk[] = []
+  private onChange?: (snapshot: UploadManagerSnapshot) => void
 
   constructor(options: UploadManagerOptions) {
-    this.apiClient = options.apiClient;
-    this.chunkReader = options.chunkReader;
-    this.maxConcurrent = options.maxConcurrent ?? 3;
-    this.maxRetries = options.maxRetries ?? 3;
-    this.retryDelay = options.retryDelay ?? getRetryDelay;
+    this.apiClient = options.apiClient
+    this.chunkReader = options.chunkReader
+    this.maxConcurrent = options.maxConcurrent ?? 3
+    this.maxRetries = options.maxRetries ?? 3
+    this.retryDelay = options.retryDelay ?? getRetryDelay
   }
 
   setOnChange(cb: (snapshot: UploadManagerSnapshot) => void): void {
-    this.onChange = cb;
+    this.onChange = cb
   }
 
   async addFiles(files: FileDescriptor[]): Promise<void> {
@@ -57,138 +57,155 @@ export class UploadManager {
         status: 'queued',
         progress: 0,
         retries: {},
-      };
+      }
       // Use file.id as a temporary key until we have a real uploadId
-      this.sessions.set(file.id, session);
+      this.sessions.set(file.id, session)
     }
-    this.emit();
+    this.emit()
   }
 
   async start(): Promise<void> {
-    const queued = [...this.sessions.values()].filter(s => s.status === 'queued');
+    const queued = [...this.sessions.values()].filter(
+      (s) => s.status === 'queued',
+    )
     if (queued.length === 0) {
-      this.dispatch();
-      return;
+      this.dispatch()
+      return
     }
 
     // Transition ALL queued sessions to validating in one shot so every card
     // appears in the UI immediately, before any network request is made.
     for (const session of queued) {
-      session.status = 'validating';
+      session.status = 'validating'
     }
-    this.emit();
+    this.emit()
 
     // Initiate all files concurrently — each resolves independently.
     await Promise.allSettled(
       queued.map(async (session) => {
         try {
-          const { uploadId, totalChunks } = await this.apiClient.initiate(session.fileDescriptor);
-          session.uploadId = uploadId;
-          session.totalChunks = totalChunks > 0 ? totalChunks : calculateTotalChunks(session.fileDescriptor.size);
-          session.status = 'uploading';
+          const { uploadId, totalChunks } = await this.apiClient.initiate(
+            session.fileDescriptor,
+          )
+          session.uploadId = uploadId
+          session.totalChunks =
+            totalChunks > 0
+              ? totalChunks
+              : calculateTotalChunks(session.fileDescriptor.size)
+          session.status = 'uploading'
 
           // Re-key by real uploadId
-          this.sessions.delete(session.fileDescriptor.id);
-          this.sessions.set(uploadId, session);
+          this.sessions.delete(session.fileDescriptor.id)
+          this.sessions.set(uploadId, session)
 
-          this.enqueueChunksForSession(session);
-          this.emit();
+          this.enqueueChunksForSession(session)
+          this.emit()
         } catch (err) {
-          session.status = 'failed';
-          session.error = err instanceof Error ? err.message : String(err);
-          this.emit();
+          session.status = 'failed'
+          session.error = err instanceof Error ? err.message : String(err)
+          this.emit()
         }
       }),
-    );
+    )
 
-    this.dispatch();
+    this.dispatch()
   }
 
   pause(uploadId: string): void {
-    const session = this.sessions.get(uploadId);
-    if (!session || session.status !== 'uploading') return;
+    const session = this.sessions.get(uploadId)
+    if (!session || session.status !== 'uploading') return
 
-    session.status = 'paused';
+    session.status = 'paused'
 
     // Remove pending chunks for this upload from the queue
-    this.queue = this.queue.filter(t => t.uploadId !== uploadId);
+    this.queue = this.queue.filter((t) => t.uploadId !== uploadId)
 
     // Abort in-flight chunks for this upload
-    for (const inflight of this.inFlight.filter(i => i.uploadId === uploadId)) {
-      inflight.abortController.abort();
+    for (const inflight of this.inFlight.filter(
+      (i) => i.uploadId === uploadId,
+    )) {
+      inflight.abortController.abort()
     }
 
-    this.emit();
+    this.emit()
   }
 
   resume(uploadId: string): void {
-    const session = this.sessions.get(uploadId);
-    if (!session || session.status !== 'paused') return;
+    const session = this.sessions.get(uploadId)
+    if (!session || session.status !== 'paused') return
 
-    session.status = 'uploading';
+    session.status = 'uploading'
 
     // If all chunks uploaded while paused, go straight to finalize
-    if (session.uploadedChunks.length === session.totalChunks && session.totalChunks > 0) {
-      this.finalizeSession(session);
-      this.emit();
-      return;
+    if (
+      session.uploadedChunks.length === session.totalChunks &&
+      session.totalChunks > 0
+    ) {
+      this.finalizeSession(session)
+      this.emit()
+      return
     }
 
-    this.enqueueChunksForSession(session);
-    this.emit();
-    this.dispatch();
+    this.enqueueChunksForSession(session)
+    this.emit()
+    this.dispatch()
   }
 
   remove(uploadId: string): void {
-    const session = this.sessions.get(uploadId);
-    if (!session) return;
+    const session = this.sessions.get(uploadId)
+    if (!session) return
     const isDone =
       session.status === 'completed' ||
       session.status === 'canceled' ||
-      session.status === 'failed';
-    if (!isDone) return;
-    this.sessions.delete(uploadId);
-    this.emit();
+      session.status === 'failed'
+    if (!isDone) return
+    this.sessions.delete(uploadId)
+    this.emit()
   }
 
   retry(uploadId: string): void {
-    const session = this.sessions.get(uploadId);
-    if (!session || session.status !== 'failed') return;
+    const session = this.sessions.get(uploadId)
+    if (!session || session.status !== 'failed') return
 
-    session.status = 'uploading';
-    session.error = undefined;
-    session.retries = {};
+    session.status = 'uploading'
+    session.error = undefined
+    session.retries = {}
 
     // All chunks already uploaded but finalize failed — go straight to
     // finalize instead of re-uploading chunks that are already on the server.
-    if (session.totalChunks > 0 && session.uploadedChunks.length === session.totalChunks) {
-      this.emit();
-      this.finalizeSession(session);
-      return;
+    if (
+      session.totalChunks > 0 &&
+      session.uploadedChunks.length === session.totalChunks
+    ) {
+      this.emit()
+      this.finalizeSession(session)
+      return
     }
 
-    this.enqueueChunksForSession(session);
-    this.emit();
-    this.dispatch();
+    this.enqueueChunksForSession(session)
+    this.emit()
+    this.dispatch()
   }
 
   async cancel(uploadId: string): Promise<void> {
-    const session = this.sessions.get(uploadId);
-    if (!session) return;
+    const session = this.sessions.get(uploadId)
+    if (!session) return
 
-    session.status = 'canceled';
+    session.status = 'canceled'
 
-    this.queue = this.queue.filter(t => t.uploadId !== uploadId);
+    this.queue = this.queue.filter((t) => t.uploadId !== uploadId)
 
-    for (const inflight of this.inFlight.filter(i => i.uploadId === uploadId)) {
-      inflight.abortController.abort();
+    for (const inflight of this.inFlight.filter(
+      (i) => i.uploadId === uploadId,
+    )) {
+      inflight.abortController.abort()
     }
 
-    this.emit();
+    this.emit()
 
     if (this.apiClient.cancel) {
       try {
-        await this.apiClient.cancel(uploadId);
+        await this.apiClient.cancel(uploadId)
       } catch {
         // Best-effort server cancel — ignore errors
       }
@@ -196,25 +213,29 @@ export class UploadManager {
   }
 
   getSnapshot(): UploadManagerSnapshot {
-    const sessions: Record<string, UploadSession> = {};
+    const sessions: Record<string, UploadSession> = {}
     for (const [id, session] of this.sessions) {
-      sessions[id] = { ...session, uploadedChunks: [...session.uploadedChunks] };
+      sessions[id] = { ...session, uploadedChunks: [...session.uploadedChunks] }
     }
-    return { sessions };
+    return { sessions }
   }
 
   // ── Private ──────────────────────────────────────────────────────────────
 
   private enqueueChunksForSession(session: UploadSession): void {
-    const uploadedSet = new Set(session.uploadedChunks);
+    const uploadedSet = new Set(session.uploadedChunks)
     for (let i = 0; i < session.totalChunks; i++) {
       if (!uploadedSet.has(i)) {
         // Avoid re-queuing chunks already in queue
         const alreadyQueued = this.queue.some(
-          t => t.uploadId === session.uploadId && t.chunkIndex === i,
-        );
+          (t) => t.uploadId === session.uploadId && t.chunkIndex === i,
+        )
         if (!alreadyQueued) {
-          this.queue.push({ uploadId: session.uploadId, chunkIndex: i, data: new ArrayBuffer(0) });
+          this.queue.push({
+            uploadId: session.uploadId,
+            chunkIndex: i,
+            data: new ArrayBuffer(0),
+          })
         }
       }
     }
@@ -222,17 +243,21 @@ export class UploadManager {
 
   private dispatch(): void {
     while (this.inFlight.length < this.maxConcurrent && this.queue.length > 0) {
-      const task = this.queue.shift()!;
-      const session = this.sessions.get(task.uploadId);
+      const task = this.queue.shift()!
+      const session = this.sessions.get(task.uploadId)
 
-      if (!session || session.status !== 'uploading') continue;
+      if (!session || session.status !== 'uploading') continue
 
-      const abortController = new AbortController();
-      this.inFlight.push({ uploadId: task.uploadId, chunkIndex: task.chunkIndex, abortController });
+      const abortController = new AbortController()
+      this.inFlight.push({
+        uploadId: task.uploadId,
+        chunkIndex: task.chunkIndex,
+        abortController,
+      })
 
       this.executeChunk(task, session, abortController).catch(() => {
         // errors handled inside executeChunk
-      });
+      })
     }
   }
 
@@ -242,89 +267,107 @@ export class UploadManager {
     abortController: AbortController,
   ): Promise<void> {
     try {
-      const data = await this.chunkReader(session.fileDescriptor, task.chunkIndex, CHUNK_SIZE);
+      const data = await this.chunkReader(
+        session.fileDescriptor,
+        task.chunkIndex,
+        CHUNK_SIZE,
+      )
 
-      if (abortController.signal.aborted) return;
+      if (abortController.signal.aborted) return
 
-      await this.apiClient.uploadChunk(session.uploadId, task.chunkIndex, data, abortController.signal);
+      await this.apiClient.uploadChunk(
+        session.uploadId,
+        task.chunkIndex,
+        data,
+        abortController.signal,
+      )
 
       // If uploadChunk resolved (didn't throw), the data was sent — record it.
       // onChunkSuccess handles paused/canceled states gracefully.
-      this.onChunkSuccess(session, task.chunkIndex);
+      this.onChunkSuccess(session, task.chunkIndex)
     } catch (err) {
-      if (abortController.signal.aborted) return;
-      this.onChunkError(session, task.chunkIndex, err);
+      if (abortController.signal.aborted) return
+      this.onChunkError(session, task.chunkIndex, err)
     } finally {
       this.inFlight = this.inFlight.filter(
-        i => !(i.uploadId === task.uploadId && i.chunkIndex === task.chunkIndex),
-      );
-      this.dispatch();
+        (i) =>
+          !(i.uploadId === task.uploadId && i.chunkIndex === task.chunkIndex),
+      )
+      this.dispatch()
     }
   }
 
   private onChunkSuccess(session: UploadSession, chunkIndex: number): void {
     // Always record the chunk — even if paused, don't waste a successful upload
     if (!session.uploadedChunks.includes(chunkIndex)) {
-      session.uploadedChunks.push(chunkIndex);
+      session.uploadedChunks.push(chunkIndex)
     }
-    session.progress = session.uploadedChunks.length / session.totalChunks;
+    session.progress = session.uploadedChunks.length / session.totalChunks
 
     // If canceled, silently ignore
-    if (session.status === 'canceled') return;
+    if (session.status === 'canceled') return
 
     // If paused, record but don't continue
     if (session.status === 'paused') {
-      this.emit();
-      return;
+      this.emit()
+      return
     }
 
-    this.emit();
+    this.emit()
 
     if (session.uploadedChunks.length === session.totalChunks) {
-      this.finalizeSession(session);
+      this.finalizeSession(session)
     }
   }
 
-  private onChunkError(session: UploadSession, chunkIndex: number, err: unknown): void {
-    const retries = session.retries[chunkIndex] ?? 0;
+  private onChunkError(
+    session: UploadSession,
+    chunkIndex: number,
+    err: unknown,
+  ): void {
+    const retries = session.retries[chunkIndex] ?? 0
 
     if (retries >= this.maxRetries) {
-      session.status = 'failed';
-      session.error = err instanceof Error ? err.message : String(err);
+      session.status = 'failed'
+      session.error = err instanceof Error ? err.message : String(err)
       // Remove all remaining queued chunks for this upload
-      this.queue = this.queue.filter(t => t.uploadId !== session.uploadId);
-      this.emit();
-      return;
+      this.queue = this.queue.filter((t) => t.uploadId !== session.uploadId)
+      this.emit()
+      return
     }
 
-    session.retries[chunkIndex] = retries + 1;
-    const delay = this.retryDelay(retries + 1);
+    session.retries[chunkIndex] = retries + 1
+    const delay = this.retryDelay(retries + 1)
 
     setTimeout(() => {
-      if (session.status !== 'uploading') return;
-      this.queue.unshift({ uploadId: session.uploadId, chunkIndex, data: new ArrayBuffer(0) });
-      this.dispatch();
-    }, delay);
+      if (session.status !== 'uploading') return
+      this.queue.unshift({
+        uploadId: session.uploadId,
+        chunkIndex,
+        data: new ArrayBuffer(0),
+      })
+      this.dispatch()
+    }, delay)
 
-    this.emit();
+    this.emit()
   }
 
   private finalizeSession(session: UploadSession): void {
     this.apiClient
       .finalize(session.uploadId)
       .then(() => {
-        session.status = 'completed';
-        session.progress = 1;
-        this.emit();
+        session.status = 'completed'
+        session.progress = 1
+        this.emit()
       })
-      .catch(err => {
-        session.status = 'failed';
-        session.error = err instanceof Error ? err.message : String(err);
-        this.emit();
-      });
+      .catch((err) => {
+        session.status = 'failed'
+        session.error = err instanceof Error ? err.message : String(err)
+        this.emit()
+      })
   }
 
   private emit(): void {
-    this.onChange?.(this.getSnapshot());
+    this.onChange?.(this.getSnapshot())
   }
 }

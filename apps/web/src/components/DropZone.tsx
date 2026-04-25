@@ -29,7 +29,12 @@ function UploadCloudIcon({ className }: { className?: string }) {
   )
 }
 
-export function DropZone({ onFiles, disabled, compact, maxFiles = 10 }: DropZoneProps) {
+export function DropZone({
+  onFiles,
+  disabled,
+  compact,
+  maxFiles = 10,
+}: DropZoneProps) {
   const [rejected, setRejected] = useState(false)
 
   const onDrop = useCallback(
@@ -64,26 +69,55 @@ export function DropZone({ onFiles, disabled, compact, maxFiles = 10 }: DropZone
             'flex items-center justify-center gap-2 rounded-xl border border-dashed py-2.5 cursor-pointer transition-all duration-150',
             isDragActive && !rejected && 'border-blue-400 bg-blue-50',
             rejected && 'border-red-400 bg-red-50',
-            !isDragActive && !rejected && 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/30',
+            !isDragActive &&
+              !rejected &&
+              'border-gray-200 hover:border-blue-300 hover:bg-blue-50/30',
             disabled && 'opacity-50 cursor-not-allowed',
           )}
         >
           <input {...getInputProps()} />
-          <div className={clsx(
-            'w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors',
-            isDragActive && !rejected ? 'bg-blue-200' : rejected ? 'bg-red-100' : 'bg-blue-100',
-          )}>
+          <div
+            className={clsx(
+              'w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors',
+              isDragActive && !rejected
+                ? 'bg-blue-200'
+                : rejected
+                  ? 'bg-red-100'
+                  : 'bg-blue-100',
+            )}
+          >
             <svg
-              className={clsx('w-3 h-3', isDragActive && !rejected ? 'text-blue-600' : rejected ? 'text-red-500' : 'text-blue-500')}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"
+              className={clsx(
+                'w-3 h-3',
+                isDragActive && !rejected
+                  ? 'text-blue-600'
+                  : rejected
+                    ? 'text-red-500'
+                    : 'text-blue-500',
+              )}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              aria-hidden="true"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4.5v15m7.5-7.5h-15"
+              />
             </svg>
           </div>
-          <span className={clsx(
-            'text-sm transition-colors',
-            isDragActive && !rejected ? 'text-blue-600 font-medium' : rejected ? 'text-red-600 font-medium' : 'text-gray-400',
-          )}>
+          <span
+            className={clsx(
+              'text-sm transition-colors',
+              isDragActive && !rejected
+                ? 'text-blue-600 font-medium'
+                : rejected
+                  ? 'text-red-600 font-medium'
+                  : 'text-gray-400',
+            )}
+          >
             {isDragActive && !rejected
               ? 'Drop to add more files'
               : rejected
@@ -98,9 +132,13 @@ export function DropZone({ onFiles, disabled, compact, maxFiles = 10 }: DropZone
           aria-label="Upload files — drop or click to browse"
           className={clsx(
             'relative flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed px-6 py-14 text-center cursor-pointer transition-all duration-200',
-            isDragActive && !rejected && 'border-blue-400 bg-blue-50 scale-[1.01]',
+            isDragActive &&
+              !rejected &&
+              'border-blue-400 bg-blue-50 scale-[1.01]',
             rejected && 'border-red-400 bg-red-50',
-            !isDragActive && !rejected && 'border-gray-200 bg-gray-50/80 hover:border-blue-300 hover:bg-blue-50/40',
+            !isDragActive &&
+              !rejected &&
+              'border-gray-200 bg-gray-50/80 hover:border-blue-300 hover:bg-blue-50/40',
             disabled && 'opacity-50 cursor-not-allowed',
           )}
         >
@@ -109,25 +147,42 @@ export function DropZone({ onFiles, disabled, compact, maxFiles = 10 }: DropZone
           <div
             className={clsx(
               'w-22 h-22 rounded-[22px] flex items-center justify-center transition-colors',
-              isDragActive && !rejected ? 'bg-blue-100' : rejected ? 'bg-red-100' : 'bg-blue-50',
+              isDragActive && !rejected
+                ? 'bg-blue-100'
+                : rejected
+                  ? 'bg-red-100'
+                  : 'bg-blue-50',
             )}
           >
             <UploadCloudIcon
               className={clsx(
                 'w-11 h-11',
-                isDragActive && !rejected ? 'text-blue-500' : rejected ? 'text-red-500' : 'text-blue-400',
+                isDragActive && !rejected
+                  ? 'text-blue-500'
+                  : rejected
+                    ? 'text-red-500'
+                    : 'text-blue-400',
               )}
             />
           </div>
 
           {isDragActive && !rejected ? (
-            <p className="text-blue-600 font-semibold text-base">Drop files here</p>
+            <p className="text-blue-600 font-semibold text-base">
+              Drop files here
+            </p>
           ) : rejected ? (
-            <p className="text-red-600 font-medium">Only images & videos — max {maxFiles} files</p>
+            <p className="text-red-600 font-medium">
+              Only images & videos — max {maxFiles} files
+            </p>
           ) : (
             <div className="space-y-1.5">
-              <p className="text-gray-800 font-semibold">Drop files here or <span className="text-blue-600">browse</span></p>
-              <p className="text-gray-400 text-sm">Images & videos · up to {maxFiles} files · {formatFileSize(DEFAULT_MAX_SIZE_BYTES)} each</p>
+              <p className="text-gray-800 font-semibold">
+                Drop files here or <span className="text-blue-600">browse</span>
+              </p>
+              <p className="text-gray-400 text-sm">
+                Images & videos · up to {maxFiles} files ·{' '}
+                {formatFileSize(DEFAULT_MAX_SIZE_BYTES)} each
+              </p>
             </div>
           )}
         </div>

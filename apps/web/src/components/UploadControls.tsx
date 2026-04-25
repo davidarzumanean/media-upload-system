@@ -1,17 +1,24 @@
-import type {UploadManagerSnapshot} from '@media-upload/core'
-import {ProgressBar} from './ProgressBar'
+import type { UploadManagerSnapshot } from '@media-upload/core'
+import { ProgressBar } from './ProgressBar'
 
 interface UploadControlsProps {
   snapshot: UploadManagerSnapshot
 }
 
-const VISIBLE_PROGRESS_STATUSES = new Set(['uploading', 'validating', 'queued', 'paused'])
+const VISIBLE_PROGRESS_STATUSES = new Set([
+  'uploading',
+  'validating',
+  'queued',
+  'paused',
+])
 
-export function UploadControls({snapshot}: UploadControlsProps) {
+export function UploadControls({ snapshot }: UploadControlsProps) {
   const sessions = Object.values(snapshot.sessions)
 
   // Show the bar while uploads are still active or paused.
-  const hasVisibleProgress = sessions.some((s) => VISIBLE_PROGRESS_STATUSES.has(s.status))
+  const hasVisibleProgress = sessions.some((s) =>
+    VISIBLE_PROGRESS_STATUSES.has(s.status),
+  )
   if (!hasVisibleProgress) return null
 
   const counts = sessions.reduce(
@@ -33,7 +40,9 @@ export function UploadControls({snapshot}: UploadControlsProps) {
   const statusParts: string[] = []
 
   if (counts.completed > 0) {
-    statusParts.push(`${counts.completed} of ${sessions.length} file${sessions.length !== 1 ? 's' : ''} completed`)
+    statusParts.push(
+      `${counts.completed} of ${sessions.length} file${sessions.length !== 1 ? 's' : ''} completed`,
+    )
   }
 
   if (counts.uploading > 0) {
@@ -56,7 +65,8 @@ export function UploadControls({snapshot}: UploadControlsProps) {
     statusParts.push(`${counts.canceled} canceled`)
   }
 
-  const statusText = statusParts.length > 0 ? statusParts.join(' · ') : 'Preparing uploads'
+  const statusText =
+    statusParts.length > 0 ? statusParts.join(' · ') : 'Preparing uploads'
 
   // Overall progress = average progress across all sessions.
   // Each session contributes its current progress (0 → 1),
@@ -75,14 +85,18 @@ export function UploadControls({snapshot}: UploadControlsProps) {
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-700 leading-tight">Upload progress</p>
-          <p className="text-xs text-gray-400 mt-0.5 leading-tight">{statusText}</p>
+          <p className="text-sm font-semibold text-gray-700 leading-tight">
+            Upload progress
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5 leading-tight">
+            {statusText}
+          </p>
         </div>
         <span className="text-2xl font-bold text-blue-600 tabular-nums leading-none shrink-0">
           {pct}%
         </span>
       </div>
-      <ProgressBar progress={progress} color="blue"/>
+      <ProgressBar progress={progress} color="blue" />
     </div>
   )
 }
