@@ -50,9 +50,8 @@ function saveHistory(entries: HistoryEntry[]): void {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(entries))
 }
 
-const previewUrls = new Map<string, string>()
-
 export function useUploadManager(): UseUploadManagerReturn {
+  const previewUrls = useRef(new Map<string, string>())
   const [rawSnapshot, setRawSnapshot] = useState<UploadManagerSnapshot>({
     sessions: {},
   })
@@ -144,10 +143,10 @@ export function useUploadManager(): UseUploadManagerReturn {
               session.status === 'failed') &&
             session.fileDescriptor.previewUri
           ) {
-            const url = previewUrls.get(session.fileDescriptor.id)
+            const url = previewUrls.current.get(session.fileDescriptor.id)
             if (url) {
               URL.revokeObjectURL(url)
-              previewUrls.delete(session.fileDescriptor.id)
+              previewUrls.current.delete(session.fileDescriptor.id)
             }
             unregisterFile(session.fileDescriptor.id)
           }
@@ -178,7 +177,7 @@ export function useUploadManager(): UseUploadManagerReturn {
         const id = `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2)}`
         const isImage = f.type.startsWith('image/')
         const previewUri = isImage ? URL.createObjectURL(f) : undefined
-        if (previewUri) previewUrls.set(id, previewUri)
+        if (previewUri) previewUrls.current.set(id, previewUri)
 
         const descriptor: FileDescriptor = {
           id,
@@ -224,7 +223,7 @@ export function useUploadManager(): UseUploadManagerReturn {
         })
       }
     },
-    [manager],
+    [manager, addToast],
   )
 
   const pause = useCallback((id: string) => manager.pause(id), [manager])

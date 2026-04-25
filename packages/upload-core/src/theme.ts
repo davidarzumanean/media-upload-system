@@ -9,9 +9,9 @@
  */
 export const colors = {
   // ── Brand / primary ────────────────────────────────────────────────────────
-  primary: '#2563EB', // blue-600  — buttons, links, progress bars
+  primary: '#3b82f6', // blue-600  — buttons, links, progress bars
   primaryLight: '#EFF6FF', // blue-50   — tinted backgrounds
-  primaryDark: '#1e40af', // blue-800  — button hover / active
+  primaryDark: '#2563eb', // blue-800  — button hover / active
 
   // ── Semantic status ────────────────────────────────────────────────────────
   success: '#10B981', // emerald-500 — completed state

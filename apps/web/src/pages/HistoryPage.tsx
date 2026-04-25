@@ -20,7 +20,7 @@ export function HistoryPage() {
           </h1>
           <p className="text-gray-400 text-sm mt-0.5">
             {history.length > 0
-              ? `${history.length} file${history.length !== 1 ? 's' : ''} uploaded this session`
+              ? `${history.length} file${history.length !== 1 ? 's' : ''} uploaded`
               : 'No uploads yet'}
           </p>
         </div>
