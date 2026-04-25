@@ -3,6 +3,8 @@ import { formatFileSize, formatDate } from '@media-upload/core'
 import { useUploadManagerContext } from '../context/UploadManagerContext'
 import type { HistoryEntry } from '../hooks/useUploadManager'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
+
 // ── Icons ────────────────────────────────────────────────────────────────────
 
 function CheckIcon() {
@@ -45,9 +47,9 @@ function EntryThumbnail({ entry }: { entry: HistoryEntry }) {
 
   return (
     <div className="w-10 h-10 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center">
-      {isImage && entry.previewUri && !imgError ? (
+      {isImage && !imgError ? (
         <img
-          src={entry.previewUri}
+          src={`${API_BASE_URL}/uploads/${entry.id}/file`}
           alt=""
           className="w-full h-full object-cover"
           onError={() => setImgError(true)}
