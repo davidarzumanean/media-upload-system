@@ -7,8 +7,9 @@ import {
   type UploadManagerSnapshot,
   type UploadSession,
 } from '@media-upload/core'
-import { createApiClient } from '../lib/api-client'
-import { chunkReader, registerFile, unregisterFile } from '../lib/chunk-reader'
+import { createApiClient } from '@/lib/api-client'
+import { chunkReader, registerFile, unregisterFile } from '@/lib/chunk-reader'
+import { useToast } from '@/context/ToastContext'
 
 const HISTORY_KEY = 'media-upload-history'
 
@@ -41,6 +42,7 @@ export function useUploadManager(): UseUploadManagerReturn {
   const [hiddenUploadIds, setHiddenUploadIds] = useState<string[]>([])
   const [speeds, setSpeeds] = useState<Record<string, number>>({})
   const speedTrackRef = useRef<Record<string, { bytes: number; ts: number; speed: number }>>({})
+  const { addToast } = useToast()
 
   // Load persisted history on mount
   useEffect(() => {
@@ -169,7 +171,8 @@ export function useUploadManager(): UseUploadManagerReturn {
         return descriptor
       })
 
-      const { valid } = validateFiles(descriptors)
+      const { valid, errors } = validateFiles(descriptors)
+      for (const err of errors) addToast(err.reason)
 
       if (valid.length > 0) {
         // Inject queued placeholders immediately so UI updates in same frame

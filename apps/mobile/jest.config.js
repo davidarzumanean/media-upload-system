@@ -17,6 +17,7 @@ module.exports = {
   },
   setupFiles: ['./jest-setup.ts'],
   moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
     '^@media-upload/core$':
       '<rootDir>/../../packages/upload-core/dist/index.js',
     '^expo-file-system/legacy$':

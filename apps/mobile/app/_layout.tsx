@@ -4,11 +4,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { colors } from '@media-upload/core'
 import { UploadManagerProvider } from '@/lib/upload-manager-context'
+import { ToastProvider } from '@/context/ToastContext'
+import { Toast } from '@/components/Toast'
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <UploadManagerProvider>
+      <ToastProvider>
+        <UploadManagerProvider>
         <Tabs
           screenOptions={{
             headerShown: false,
@@ -38,7 +41,9 @@ export default function RootLayout() {
             }}
           />
         </Tabs>
-      </UploadManagerProvider>
+        </UploadManagerProvider>
+        <Toast />
+      </ToastProvider>
     </SafeAreaProvider>
   )
 }

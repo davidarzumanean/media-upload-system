@@ -1,6 +1,10 @@
 import { renderHook, act } from '@testing-library/react-native'
 import { useUploadManager } from '../useUploadManager'
 
+jest.mock('@/context/ToastContext', () => ({
+  useToast: jest.fn(() => ({ addToast: jest.fn() })),
+}))
+
 // Mock the UploadManager while keeping real validateFiles / chunking from core.
 jest.mock('@media-upload/core', () => {
   const actual = jest.requireActual('@media-upload/core')
