@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { FilePreview } from '../FilePreview'
+import { FileUploadCard } from '../FileUploadCard'
 import type { UploadSession } from '@media-upload/core'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -40,9 +40,9 @@ beforeEach(() => vi.clearAllMocks())
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
 
-describe('FilePreview — rendering', () => {
+describe('FileUploadCard — rendering', () => {
   it('displays the filename', () => {
-    render(<FilePreview session={makeSession()} {...defaultProps()} />)
+    render(<FileUploadCard session={makeSession()} {...defaultProps()} />)
     expect(screen.getByText('photo.jpg')).toBeInTheDocument()
   })
 
@@ -57,7 +57,7 @@ describe('FilePreview — rendering', () => {
 
     for (const [status, label] of cases) {
       const { unmount } = render(
-        <FilePreview
+        <FileUploadCard
           session={makeSession({
             status,
             progress: status === 'completed' ? 1 : 0.3,
@@ -73,7 +73,7 @@ describe('FilePreview — rendering', () => {
 
   it('shows the error message when the session has an error', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({
           status: 'failed',
           error: 'Connection timed out',
@@ -86,7 +86,7 @@ describe('FilePreview — rendering', () => {
 
   it('shows file size and mime type in the idle meta line', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'completed', progress: 1 })}
         {...defaultProps()}
       />,
@@ -99,10 +99,10 @@ describe('FilePreview — rendering', () => {
 
 // ── Progress bar ──────────────────────────────────────────────────────────────
 
-describe('FilePreview — progress bar', () => {
+describe('FileUploadCard — progress bar', () => {
   it('renders a progressbar during uploading with the correct value', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'uploading', progress: 0.6 })}
         {...defaultProps()}
       />,
@@ -114,7 +114,7 @@ describe('FilePreview — progress bar', () => {
 
   it('renders a progressbar during paused', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'paused', progress: 0.3 })}
         {...defaultProps()}
       />,
@@ -124,7 +124,7 @@ describe('FilePreview — progress bar', () => {
 
   it('renders a progressbar at 100% when completed', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({
           status: 'completed',
           progress: 1,
@@ -140,7 +140,7 @@ describe('FilePreview — progress bar', () => {
 
   it('does not render a progressbar when the status is failed', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'failed', error: 'network error' })}
         {...defaultProps()}
       />,
@@ -150,7 +150,7 @@ describe('FilePreview — progress bar', () => {
 
   it('does not render a progressbar when the status is canceled', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'canceled' })}
         {...defaultProps()}
       />,
@@ -161,10 +161,10 @@ describe('FilePreview — progress bar', () => {
 
 // ── Action buttons ────────────────────────────────────────────────────────────
 
-describe('FilePreview — buttons while uploading', () => {
+describe('FileUploadCard — buttons while uploading', () => {
   it('shows pause and cancel buttons', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'uploading' })}
         {...defaultProps()}
       />,
@@ -175,7 +175,7 @@ describe('FilePreview — buttons while uploading', () => {
 
   it('does not show resume or retry or dismiss buttons', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'uploading' })}
         {...defaultProps()}
       />,
@@ -192,10 +192,10 @@ describe('FilePreview — buttons while uploading', () => {
   })
 })
 
-describe('FilePreview — buttons while paused', () => {
+describe('FileUploadCard — buttons while paused', () => {
   it('shows resume and cancel buttons', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'paused', progress: 0.3 })}
         {...defaultProps()}
       />,
@@ -206,7 +206,7 @@ describe('FilePreview — buttons while paused', () => {
 
   it('does not show the pause button', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'paused', progress: 0.3 })}
         {...defaultProps()}
       />,
@@ -217,10 +217,10 @@ describe('FilePreview — buttons while paused', () => {
   })
 })
 
-describe('FilePreview — buttons when completed', () => {
+describe('FileUploadCard — buttons when completed', () => {
   it('shows only the dismiss button', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'completed', progress: 1 })}
         {...defaultProps()}
       />,
@@ -241,10 +241,10 @@ describe('FilePreview — buttons when completed', () => {
   })
 })
 
-describe('FilePreview — buttons when failed', () => {
+describe('FileUploadCard — buttons when failed', () => {
   it('shows retry and dismiss buttons', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'failed', error: 'err' })}
         {...defaultProps()}
       />,
@@ -255,7 +255,7 @@ describe('FilePreview — buttons when failed', () => {
 
   it('does not show pause, resume, or cancel buttons', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'failed', error: 'err' })}
         {...defaultProps()}
       />,
@@ -274,12 +274,12 @@ describe('FilePreview — buttons when failed', () => {
 
 // ── Callbacks ─────────────────────────────────────────────────────────────────
 
-describe('FilePreview — callbacks', () => {
+describe('FileUploadCard — callbacks', () => {
   it('calls onPause with the uploadId when pause is clicked', async () => {
     const onPause = vi.fn()
     const user = userEvent.setup()
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'uploading' })}
         {...defaultProps()}
         onPause={onPause}
@@ -293,7 +293,7 @@ describe('FilePreview — callbacks', () => {
     const onResume = vi.fn()
     const user = userEvent.setup()
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'paused', progress: 0.3 })}
         {...defaultProps()}
         onResume={onResume}
@@ -307,7 +307,7 @@ describe('FilePreview — callbacks', () => {
     const onCancel = vi.fn()
     const user = userEvent.setup()
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'uploading' })}
         {...defaultProps()}
         onCancel={onCancel}
@@ -321,7 +321,7 @@ describe('FilePreview — callbacks', () => {
     const onRetry = vi.fn()
     const user = userEvent.setup()
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'failed', error: 'err' })}
         {...defaultProps()}
         onRetry={onRetry}
@@ -335,7 +335,7 @@ describe('FilePreview — callbacks', () => {
     const onDismiss = vi.fn()
     const user = userEvent.setup()
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({ status: 'completed', progress: 1 })}
         {...defaultProps()}
         onDismiss={onDismiss}
@@ -349,7 +349,7 @@ describe('FilePreview — callbacks', () => {
     const onDismiss = vi.fn()
     const user = userEvent.setup()
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({
           uploadId: '',
           status: 'completed',
@@ -366,10 +366,10 @@ describe('FilePreview — callbacks', () => {
 
 // ── Thumbnail ─────────────────────────────────────────────────────────────────
 
-describe('FilePreview — thumbnail', () => {
+describe('FileUploadCard — thumbnail', () => {
   it('renders an img element when a previewUri is provided for an image', () => {
     render(
-      <FilePreview
+      <FileUploadCard
         session={makeSession({
           fileDescriptor: {
             id: 'file-id',
@@ -388,7 +388,7 @@ describe('FilePreview — thumbnail', () => {
   })
 
   it('does not render an img when there is no previewUri', () => {
-    render(<FilePreview session={makeSession()} {...defaultProps()} />)
+    render(<FileUploadCard session={makeSession()} {...defaultProps()} />)
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 })

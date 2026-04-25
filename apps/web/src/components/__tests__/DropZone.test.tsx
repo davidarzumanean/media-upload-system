@@ -46,8 +46,8 @@ describe('DropZone (full / idle)', () => {
   it('renders the headline text', () => {
     setupMock()
     render(<DropZone onFiles={vi.fn()} />)
-    // The <h2> heading now reads "Upload media" (mobile-aligned empty state)
-    expect(screen.getByText(/upload media/i)).toBeInTheDocument()
+    const dropzone = screen.getByRole('button', { name: /upload files/i })
+    expect(dropzone).toHaveTextContent(/drop files here or browse/i)
   })
 
   it('renders the helper text with file count', () => {
