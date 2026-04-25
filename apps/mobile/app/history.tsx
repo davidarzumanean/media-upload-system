@@ -5,7 +5,6 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -21,12 +20,7 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <View style={styles.header}>
-        <View style={styles.logoRow}>
-          <Ionicons name="cloud-upload" size={22} color={colors.primary} />
-          <Text style={styles.logoText}>FileStream</Text>
-        </View>
+      <View style={styles.topBar}>
         {history.length > 0 && (
           <TouchableOpacity onPress={clearHistory} accessibilityLabel="Clear all history">
             <Text style={styles.clearBtn}>Clear all</Text>
@@ -123,37 +117,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC', // slate-50 — structural
   },
-  header: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 6,
+    paddingTop: 12,
     paddingBottom: 12,
-    backgroundColor: colors.white,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E2E8F0', // slate-200 — structural
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1E293B', // slate-800 — structural
-    letterSpacing: -0.3,
   },
   clearBtn: {
     fontSize: 14,
-    color: colors.error,
+    color: colors.gray500,
     fontWeight: '500',
   },
 
   list: {
-    padding: 16,
-    paddingBottom: 120,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   listFooter: {
     height: 20,

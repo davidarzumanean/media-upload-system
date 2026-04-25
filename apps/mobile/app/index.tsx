@@ -65,14 +65,6 @@ export default function UploadScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <View style={styles.header}>
-        <View style={styles.logoRow}>
-          <Ionicons name="cloud-upload" size={22} color={colors.primary} />
-          <Text style={styles.logoText}>FileStream</Text>
-        </View>
-      </View>
-
       {/* ── Content ─────────────────────────────────────────────────────── */}
       <FlatList
         data={sessions}
@@ -173,25 +165,6 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: '#F8FAFC', // slate-50 — structural
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 6,
-    paddingBottom: 12,
-    backgroundColor: colors.white,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E2E8F0', // slate-200 — structural
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1E293B', // slate-800 — structural
-    letterSpacing: -0.3,
   },
   list: {
     padding: 16,
