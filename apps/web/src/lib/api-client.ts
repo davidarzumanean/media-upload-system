@@ -23,6 +23,7 @@ export function createApiClient(): ApiClient {
       uploadId: string,
       chunkIndex: number,
       data: Blob | ArrayBuffer,
+      signal?: AbortSignal,
     ): Promise<void> {
       const form = new FormData()
       const blob = data instanceof Blob ? data : new Blob([data])
@@ -32,6 +33,7 @@ export function createApiClient(): ApiClient {
       const res = await fetch(`${BASE_URL}/uploads/${uploadId}/chunks/${chunkIndex}`, {
         method: 'POST',
         body: form,
+        signal,
       })
       if (!res.ok) throw new Error(`Chunk upload failed: ${res.status} ${res.statusText}`)
     },

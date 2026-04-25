@@ -126,6 +126,14 @@ export class UploadManager {
     if (!session || session.status !== 'paused') return;
 
     session.status = 'uploading';
+
+    // If all chunks uploaded while paused, go straight to finalize
+    if (session.uploadedChunks.length === session.totalChunks && session.totalChunks > 0) {
+      this.finalizeSession(session);
+      this.emit();
+      return;
+    }
+
     this.enqueueChunksForSession(session);
     this.emit();
     this.dispatch();
@@ -238,10 +246,10 @@ export class UploadManager {
 
       if (abortController.signal.aborted) return;
 
-      await this.apiClient.uploadChunk(session.uploadId, task.chunkIndex, data);
+      await this.apiClient.uploadChunk(session.uploadId, task.chunkIndex, data, abortController.signal);
 
-      if (abortController.signal.aborted) return;
-
+      // If uploadChunk resolved (didn't throw), the data was sent — record it.
+      // onChunkSuccess handles paused/canceled states gracefully.
       this.onChunkSuccess(session, task.chunkIndex);
     } catch (err) {
       if (abortController.signal.aborted) return;
@@ -255,10 +263,21 @@ export class UploadManager {
   }
 
   private onChunkSuccess(session: UploadSession, chunkIndex: number): void {
+    // Always record the chunk — even if paused, don't waste a successful upload
     if (!session.uploadedChunks.includes(chunkIndex)) {
       session.uploadedChunks.push(chunkIndex);
     }
     session.progress = session.uploadedChunks.length / session.totalChunks;
+
+    // If canceled, silently ignore
+    if (session.status === 'canceled') return;
+
+    // If paused, record but don't continue
+    if (session.status === 'paused') {
+      this.emit();
+      return;
+    }
+
     this.emit();
 
     if (session.uploadedChunks.length === session.totalChunks) {

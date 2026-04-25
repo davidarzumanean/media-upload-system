@@ -36,6 +36,7 @@ export function createApiClient(): ApiClient {
       uploadId: string,
       chunkIndex: number,
       data: Blob | ArrayBuffer,
+      signal?: AbortSignal,
     ): Promise<void> {
       // React Native doesn't support Blob from ArrayBuffer.
       // Convert ArrayBuffer to base64 and send as a file-like object.
@@ -61,6 +62,7 @@ export function createApiClient(): ApiClient {
       const res = await fetch(`${BASE_URL}/uploads/${uploadId}/chunks/${chunkIndex}`, {
         method: 'POST',
         body: form,
+        signal,
       })
       if (!res.ok) throw new Error(`Chunk upload failed: ${res.status} ${res.statusText}`)
     },

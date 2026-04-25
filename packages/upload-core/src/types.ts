@@ -44,7 +44,7 @@ export type ChunkReader = (
 
 export interface ApiClient {
   initiate(file: FileDescriptor): Promise<{ uploadId: string; totalChunks: number }>;
-  uploadChunk(uploadId: string, chunkIndex: number, data: Blob | ArrayBuffer): Promise<void>;
+  uploadChunk(uploadId: string, chunkIndex: number, data: Blob | ArrayBuffer, signal?: AbortSignal): Promise<void>;
   finalize(uploadId: string): Promise<void>;
   getStatus(uploadId: string): Promise<{ status: UploadStatus }>;
   cancel?(uploadId: string): Promise<void>;

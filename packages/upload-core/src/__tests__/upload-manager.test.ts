@@ -15,7 +15,10 @@ function makeApiClient(overrides: Partial<ApiClient> = {}): ApiClient {
     initiate: vi.fn().mockImplementation((file: FileDescriptor) =>
       Promise.resolve({ uploadId: `uid-${file.id}`, totalChunks: 3 }),
     ),
-    uploadChunk: vi.fn().mockResolvedValue(undefined),
+    uploadChunk: vi.fn().mockImplementation(
+      (_uploadId: string, _chunkIndex: number, _data: Blob | ArrayBuffer, _signal?: AbortSignal) =>
+        Promise.resolve(undefined),
+    ),
     finalize: vi.fn().mockResolvedValue(undefined),
     getStatus: vi.fn().mockResolvedValue({ status: 'uploading' }),
     cancel: vi.fn().mockResolvedValue(undefined),
@@ -287,5 +290,148 @@ describe('UploadManager', () => {
 
     // Should have received multiple snapshots throughout the lifecycle
     expect(snapshots.length).toBeGreaterThan(3);
+  });
+
+  it('should pass AbortSignal to uploadChunk', async () => {
+    const file = makeFile('a');
+    await manager.addFiles([file]);
+    await manager.start();
+    await flushPromises();
+
+    expect(api.uploadChunk).toHaveBeenCalled();
+    const [, , , signal] = (api.uploadChunk as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('should abort in-flight chunks on pause', async () => {
+    const signals: AbortSignal[] = [];
+    let resolveFirst: (() => void) | undefined;
+
+    (api.uploadChunk as ReturnType<typeof vi.fn>).mockImplementation(
+      (_uploadId: string, _chunkIndex: number, _data: Blob | ArrayBuffer, signal?: AbortSignal) => {
+        if (signal) signals.push(signal);
+        return new Promise<void>(resolve => { resolveFirst = resolve; });
+      },
+    );
+
+    const file = makeFile('a');
+    await manager.addFiles([file]);
+    await manager.start();
+
+    // Pause while first chunk is in flight
+    manager.pause('uid-a');
+    resolveFirst?.();
+    await flushPromises();
+
+    expect(signals.length).toBeGreaterThan(0);
+    expect(signals[0].aborted).toBe(true);
+  });
+
+  it('should record chunk uploaded during pause if request completed before abort', async () => {
+    // We need uploadChunk to be actually invoked before pause() is called.
+    // Use a deferred that signals when the first chunk has reached uploadChunk.
+    let resolveFirst: (() => void) | undefined;
+    let firstChunkStartedResolve!: () => void;
+    const firstChunkStarted = new Promise<void>(r => { firstChunkStartedResolve = r; });
+
+    (api.uploadChunk as ReturnType<typeof vi.fn>).mockImplementation(
+      (_u: string, chunkIndex: number) => {
+        if (chunkIndex === 0) {
+          firstChunkStartedResolve();
+          return new Promise<void>(resolve => { resolveFirst = resolve; });
+        }
+        return Promise.resolve();
+      },
+    );
+
+    const file = makeFile('a');
+    await manager.addFiles([file]);
+    await manager.start();
+    // Wait until chunk 0 is genuinely inside uploadChunk before pausing
+    await firstChunkStarted;
+
+    manager.pause('uid-a');
+    resolveFirst?.();
+    await flushPromises();
+
+    const snap = manager.getSnapshot();
+    // Chunk 0 completed after the abort signal fired — should still be recorded
+    expect(snap.sessions['uid-a'].uploadedChunks.length).toBeGreaterThan(0);
+    expect(snap.sessions['uid-a'].status).toBe('paused');
+  });
+
+  it('should not re-upload already uploaded chunks on resume', async () => {
+    // Wait until all 3 chunks are inside uploadChunk before pausing
+    let resolveChunk0: (() => void) | undefined;
+    let allStartedResolve!: () => void;
+    const allStarted = new Promise<void>(r => { allStartedResolve = r; });
+    let startedCount = 0;
+
+    (api.uploadChunk as ReturnType<typeof vi.fn>).mockImplementation(
+      (_u: string, chunkIndex: number) => {
+        startedCount++;
+        if (startedCount === 3) allStartedResolve();
+        if (chunkIndex === 0) {
+          return new Promise<void>(resolve => { resolveChunk0 = resolve; });
+        }
+        return Promise.resolve();
+      },
+    );
+
+    const file = makeFile('a');
+    await manager.addFiles([file]);
+    await manager.start();
+    await allStarted; // all 3 uploadChunk calls are in-flight
+
+    manager.pause('uid-a');
+    resolveChunk0?.();
+    await flushPromises();
+
+    const uploadedBeforeResume = manager.getSnapshot().sessions['uid-a'].uploadedChunks.length;
+    expect(uploadedBeforeResume).toBeGreaterThan(0);
+
+    (api.uploadChunk as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+    manager.resume('uid-a');
+    await flushPromises();
+
+    // Total calls should equal exactly 3 — no chunk is re-uploaded
+    const totalCalls = (api.uploadChunk as ReturnType<typeof vi.fn>).mock.calls.length;
+    expect(totalCalls).toBe(3);
+    expect(manager.getSnapshot().sessions['uid-a'].uploadedChunks.length).toBe(3);
+  });
+
+  it('should finalize on resume if all chunks were uploaded while paused', async () => {
+    // Wait until all 3 chunks are inside uploadChunk, then pause and resolve them all
+    const resolvers: Array<() => void> = [];
+    let allStartedResolve!: () => void;
+    const allStarted = new Promise<void>(r => { allStartedResolve = r; });
+
+    (api.uploadChunk as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      new Promise<void>(resolve => {
+        resolvers.push(resolve);
+        if (resolvers.length === 3) allStartedResolve();
+      }),
+    );
+
+    const file = makeFile('a');
+    await manager.addFiles([file]);
+    await manager.start();
+    await allStarted; // all 3 uploadChunk calls are in-flight
+
+    manager.pause('uid-a');
+    for (const resolve of resolvers) resolve();
+    await flushPromises();
+
+    const snapAfterPause = manager.getSnapshot();
+    expect(snapAfterPause.sessions['uid-a'].status).toBe('paused');
+    expect(snapAfterPause.sessions['uid-a'].uploadedChunks.length).toBe(3);
+    expect(api.finalize).not.toHaveBeenCalled();
+
+    // Resume should detect all chunks already uploaded and go straight to finalize
+    manager.resume('uid-a');
+    await flushPromises();
+
+    expect(api.finalize).toHaveBeenCalledWith('uid-a');
+    expect(manager.getSnapshot().sessions['uid-a'].status).toBe('completed');
   });
 });
