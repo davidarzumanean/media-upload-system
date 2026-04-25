@@ -5,15 +5,16 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useState } from 'react'
 import { colors } from '@media-upload/core'
 import { useUploadManagerContext } from '@/lib/upload-manager-context'
 import { formatFileSize } from '@media-upload/core'
 import type { HistoryEntry } from '@/hooks/useUploadManager'
+import {BASE_URL} from "@/lib/api-client";
 
 export default function HistoryScreen() {
   const { history, clearHistory } = useUploadManagerContext()
@@ -50,7 +51,7 @@ export default function HistoryScreen() {
 
 function HistoryItem({ entry }: { entry: HistoryEntry }) {
   const [imgError, setImgError] = useState(false)
-  const showThumb = entry.previewUri && !imgError && entry.mimeType.startsWith('image/')
+  const showThumb = entry.mimeType.startsWith('image/') && !imgError
 
   const date = new Date(entry.completedAt)
   const dateLabel = date.toLocaleDateString(undefined, {
@@ -67,7 +68,7 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
     <View style={styles.item}>
       {showThumb ? (
         <Image
-          source={{ uri: entry.previewUri }}
+          source={{ uri: `${BASE_URL}/uploads/${entry.id}/file` }}
           style={styles.thumb}
           resizeMode="cover"
           onError={() => setImgError(true)}

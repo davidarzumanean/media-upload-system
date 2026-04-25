@@ -1,6 +1,4 @@
-import { createApiClient } from '../api-client'
-
-const BASE_URL = 'http://127.0.0.1:8000/api'
+import { createApiClient, BASE_URL } from '../api-client'
 
 function mockFetch(response: { ok: boolean; status?: number; statusText?: string; body?: unknown }) {
   globalThis.fetch = jest.fn().mockResolvedValueOnce({

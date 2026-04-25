@@ -1,42 +1,45 @@
 import { Tabs } from 'expo-router'
 import { StyleSheet, Platform } from 'react-native'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { colors } from '@media-upload/core'
 import { UploadManagerProvider } from '@/lib/upload-manager-context'
 
 export default function RootLayout() {
   return (
-    <UploadManagerProvider>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: styles.tabBar,
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: '#94A3B8', // slate-400 — structural
-          tabBarLabelStyle: styles.tabLabel,
-          tabBarItemStyle: styles.tabItem,
-        }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Upload',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="cloud-upload-outline" size={size} color={color} />
-            ),
+    <SafeAreaProvider>
+      <UploadManagerProvider>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarStyle: styles.tabBar,
+            tabBarActiveTintColor: colors.primary,
+            tabBarInactiveTintColor: '#94A3B8', // slate-400 — structural
+            tabBarLabelStyle: styles.tabLabel,
+            tabBarItemStyle: styles.tabItem,
           }}
-        />
-        <Tabs.Screen
-          name="history"
-          options={{
-            title: 'History',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="time-outline" size={size} color={color} />
-            ),
-          }}
-        />
-      </Tabs>
-    </UploadManagerProvider>
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: 'Upload',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="cloud-upload-outline" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="history"
+            options={{
+              title: 'History',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="time-outline" size={size} color={color} />
+              ),
+            }}
+          />
+        </Tabs>
+      </UploadManagerProvider>
+    </SafeAreaProvider>
   )
 }
 

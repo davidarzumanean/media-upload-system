@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { formatFileSize, formatDate } from '@media-upload/core'
 import { useUploadManagerContext } from '../context/UploadManagerContext'
 import type { HistoryEntry } from '../hooks/useUploadManager'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
+import {BASE_URL} from "../lib/api-client.ts";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 
@@ -49,7 +48,7 @@ function EntryThumbnail({ entry }: { entry: HistoryEntry }) {
     <div className="w-10 h-10 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center">
       {isImage && !imgError ? (
         <img
-          src={`${API_BASE_URL}/uploads/${entry.id}/file`}
+          src={`${BASE_URL}/uploads/${entry.id}/file`}
           alt=""
           className="w-full h-full object-cover"
           onError={() => setImgError(true)}
