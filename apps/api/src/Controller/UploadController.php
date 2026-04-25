@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Service\UploadService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -120,6 +121,22 @@ class UploadController extends AbstractController
             'missingChunks' => $missingChunks,
             'progress' => $totalChunks > 0 ? round(count($uploadedChunks) / $totalChunks * 100) : 0,
         ]);
+    }
+
+    #[Route('/{uploadId}/file', methods: ['GET'])]
+    public function serveFile(string $uploadId): Response
+    {
+        $upload = $this->uploadService->getUpload($uploadId);
+        if (!$upload || $upload['status'] !== 'completed' || empty($upload['final_path'])) {
+            return $this->json(['error' => 'File not found'], 404);
+        }
+
+        $fullPath = $this->getParameter('kernel.project_dir') . '/var/uploads/final/' . $upload['final_path'];
+        if (!file_exists($fullPath)) {
+            return $this->json(['error' => 'File not found on disk'], 404);
+        }
+
+        return new BinaryFileResponse($fullPath);
     }
 
     #[Route('/{uploadId}/cancel', methods: ['POST'])]

@@ -287,4 +287,42 @@ class UploadControllerTest extends WebTestCase
         $data = json_decode(static::getClient()->getResponse()->getContent(), true);
         $this->assertSame('canceled', $data['status']);
     }
+
+    // ─── serve file ───────────────────────────────────────────────────────────
+
+    public function testServeFileSuccess(): void
+    {
+        $init        = $this->initiate(['size' => 100, 'name' => 'photo.jpg', 'mimeType' => 'image/jpeg']);
+        $uploadId    = $init['uploadId'];
+        $totalChunks = $init['totalChunks'];
+
+        $this->uploadAllChunks($uploadId, $totalChunks);
+
+        static::getClient()->request('POST', "/api/uploads/{$uploadId}/finalize");
+        $this->assertResponseIsSuccessful();
+
+        static::getClient()->request('GET', "/api/uploads/{$uploadId}/file");
+
+        $this->assertResponseStatusCodeSame(200);
+        $contentType = static::getClient()->getResponse()->headers->get('Content-Type');
+        $this->assertStringStartsWith('image/jpeg', $contentType);
+    }
+
+    public function testServeFileNotFound(): void
+    {
+        static::getClient()->request('GET', '/api/uploads/nonexistent-upload-id/file');
+
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testServeFileNotCompleted(): void
+    {
+        $init     = $this->initiate();
+        $uploadId = $init['uploadId'];
+
+        // Do not finalize — upload remains in pending/uploading state
+        static::getClient()->request('GET', "/api/uploads/{$uploadId}/file");
+
+        $this->assertResponseStatusCodeSame(404);
+    }
 }
