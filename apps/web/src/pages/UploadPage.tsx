@@ -7,9 +7,7 @@ export function UploadPage() {
   const {
     snapshot,
     speeds,
-    validationErrors,
     addFiles,
-    clearErrors,
     pause,
     resume,
     cancel,
@@ -27,8 +25,6 @@ export function UploadPage() {
       {/* Drop zone — full empty-state hero when no files, compact strip otherwise */}
       <DropZone
         onFiles={addFiles}
-        validationErrors={validationErrors}
-        onClearErrors={clearErrors}
         compact={hasFiles}
       />
 

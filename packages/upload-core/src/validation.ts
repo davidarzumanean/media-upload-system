@@ -1,4 +1,5 @@
 import type { FileDescriptor, ValidationError } from './types.js';
+import { formatFileSize } from './format.js';
 
 const MAX_FILES = 10;
 const DEFAULT_MAX_SIZE = 100 * 1024 * 1024; // 100 MB
@@ -50,7 +51,7 @@ export function validateFiles(
       errors.push({
         fileId: file.id,
         fileName: file.name,
-        reason: `File size ${file.size} bytes exceeds the limit of ${maxSizeBytes} bytes`,
+        reason: `${file.name} (${formatFileSize(file.size)}) exceeds the ${formatFileSize(maxSizeBytes)} limit`,
       });
       continue;
     }

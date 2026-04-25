@@ -49,6 +49,16 @@ describe('validateFiles', () => {
     expect(errors[0].fileId).toBe('1');
   });
 
+  it('size error message includes the file name, formatted size, and formatted limit', () => {
+    const size = Math.round(250.3 * 1024 * 1024);
+    const files = [makeFile({ id: '1', name: 'bigvideo.mp4', size })];
+    const { errors } = validateFiles(files);
+    expect(errors).toHaveLength(1);
+    expect(errors[0].reason).toContain('bigvideo.mp4');
+    expect(errors[0].reason).toMatch(/250\.\d MB/);  // e.g. "250.3 MB"
+    expect(errors[0].reason).toContain('100.0 MB');  // the default limit
+  });
+
   it('respects a custom maxSizeBytes option', () => {
     const files = [
       makeFile({ id: '1', size: 500 }),

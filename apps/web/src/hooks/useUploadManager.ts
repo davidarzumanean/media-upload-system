@@ -5,10 +5,10 @@ import {
   type FileDescriptor,
   type UploadManagerSnapshot,
   type UploadSession,
-  type ValidationError,
 } from '@media-upload/core'
 import { createApiClient } from '../lib/api-client'
 import { chunkReader, registerFile, unregisterFile } from '../lib/chunk-reader'
+import { useToast } from '../context/ToastContext'
 
 const HISTORY_KEY = 'media-upload-history'
 
@@ -24,9 +24,7 @@ export interface HistoryEntry {
 export interface UseUploadManagerReturn {
   snapshot: UploadManagerSnapshot
   speeds: Record<string, number>
-  validationErrors: ValidationError[]
   addFiles: (files: File[]) => void
-  clearErrors: () => void
   pause: (uploadId: string) => void
   resume: (uploadId: string) => void
   cancel: (uploadId: string) => void
@@ -55,8 +53,8 @@ const previewUrls = new Map<string, string>()
 
 export function useUploadManager(): UseUploadManagerReturn {
   const [rawSnapshot, setRawSnapshot] = useState<UploadManagerSnapshot>({ sessions: {} })
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
+  const { addToast } = useToast()
   const [hiddenUploadIds, setHiddenUploadIds] = useState<string[]>([])
   const [speeds, setSpeeds] = useState<Record<string, number>>({})
   const speedTrackRef = useRef<Record<string, { bytes: number; ts: number; speed: number }>>({})
@@ -167,7 +165,7 @@ export function useUploadManager(): UseUploadManagerReturn {
       })
 
       const { valid, errors } = validateFiles(descriptors)
-      setValidationErrors(errors)
+      for (const err of errors) addToast(err.reason)
 
       if (valid.length > 0) {
         // Immediately inject queued-state sessions directly into React state
@@ -200,7 +198,6 @@ export function useUploadManager(): UseUploadManagerReturn {
     [manager],
   )
 
-  const clearErrors = useCallback(() => setValidationErrors([]), [])
   const pause = useCallback((id: string) => manager.pause(id), [manager])
   const resume = useCallback((id: string) => manager.resume(id), [manager])
   const cancel = useCallback((id: string) => manager.cancel(id), [manager])
@@ -243,9 +240,7 @@ export function useUploadManager(): UseUploadManagerReturn {
   return {
     snapshot,
     speeds,
-    validationErrors,
     addFiles,
-    clearErrors,
     pause,
     resume,
     cancel,

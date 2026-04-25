@@ -4,6 +4,10 @@ import { useUploadManager } from '../useUploadManager'
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
+vi.mock('../../context/ToastContext', () => ({
+  useToast: () => ({ addToast: vi.fn() }),
+}))
+
 vi.mock('../../lib/api-client', () => ({
   createApiClient: () => ({
     initiate: vi.fn().mockResolvedValue({ uploadId: 'server-uid', totalChunks: 1 }),
@@ -48,7 +52,6 @@ describe('useUploadManager', () => {
     const { result } = renderHook(() => useUploadManager())
     expect(result.current.snapshot.sessions).toEqual({})
     expect(result.current.speeds).toEqual({})
-    expect(result.current.validationErrors).toEqual([])
     expect(result.current.history).toEqual([])
   })
 
@@ -107,26 +110,6 @@ describe('useUploadManager', () => {
     })
 
     expect(result.current.snapshot.sessions[id]).toBeUndefined()
-  })
-
-  it('clearErrors resets validationErrors', () => {
-    // Feed an oversized file so validateFiles produces an error
-    const huge = new File([new ArrayBuffer(200 * 1024 * 1024)], 'huge.jpg', {
-      type: 'image/jpeg',
-    })
-    const { result } = renderHook(() => useUploadManager())
-
-    act(() => {
-      result.current.addFiles([huge])
-    })
-
-    expect(result.current.validationErrors.length).toBeGreaterThan(0)
-
-    act(() => {
-      result.current.clearErrors()
-    })
-
-    expect(result.current.validationErrors).toEqual([])
   })
 
   it('clearHistory empties the history list and localStorage', () => {

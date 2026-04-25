@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { UploadManagerProvider } from './context/UploadManagerContext'
+import { ToastProvider } from './context/ToastContext'
+import { Toast } from './components/Toast'
 
 // Ionicons "cloud-upload" (filled) — identical to the mobile app's header icon
 function CloudUploadIcon() {
@@ -13,7 +15,9 @@ function CloudUploadIcon() {
 
 export default function App() {
   return (
-    <UploadManagerProvider>
+    <ToastProvider>
+      <Toast />
+      <UploadManagerProvider>
       <div className="min-h-screen" style={{ backgroundColor: '#f8fafc' }}>
 
         {/* ── Header ── */}
@@ -44,7 +48,8 @@ export default function App() {
         <Outlet />
 
       </div>
-    </UploadManagerProvider>
+      </UploadManagerProvider>
+    </ToastProvider>
   )
 }
 
