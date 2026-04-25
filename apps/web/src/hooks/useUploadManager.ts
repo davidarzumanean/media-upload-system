@@ -32,6 +32,7 @@ export interface UseUploadManagerReturn {
   retryAllFailed: () => void
   dismiss: (uploadId: string) => void
   clearAll: () => void
+  clearTerminalSessions: () => void
   history: HistoryEntry[]
   clearHistory: () => void
 }
@@ -267,6 +268,19 @@ export function useUploadManager(): UseUploadManagerReturn {
     }
   }, [manager])
 
+  const clearTerminalSessions = useCallback(() => {
+    const snap = manager.getSnapshot()
+    for (const [id, session] of Object.entries(snap.sessions)) {
+      if (
+        session.status === 'completed' ||
+        session.status === 'canceled' ||
+        session.status === 'failed'
+      ) {
+        manager.remove(id)
+      }
+    }
+  }, [manager])
+
   const clearHistory = useCallback(() => {
     setHistory([])
     localStorage.removeItem(HISTORY_KEY)
@@ -283,6 +297,7 @@ export function useUploadManager(): UseUploadManagerReturn {
     retryAllFailed,
     dismiss,
     clearAll,
+    clearTerminalSessions,
     history,
     clearHistory,
   }

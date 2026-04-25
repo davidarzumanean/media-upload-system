@@ -1,12 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useUploadManager } from '../useUploadManager'
+import { UploadManager } from '@media-upload/core'
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
 vi.mock('../../context/ToastContext', () => ({
   useToast: () => ({ addToast: vi.fn() }),
 }))
+
+// Mock UploadManager so we can inspect calls (addFiles, remove, getSnapshot…)
+// while keeping the real validateFiles, types, etc.
+// Arrow functions cannot be constructors — the factory must use `function`.
+vi.mock('@media-upload/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@media-upload/core')>()
+  const mockInstance = {
+    setOnChange: vi.fn(),
+    addFiles: vi.fn().mockResolvedValue(undefined),
+    start: vi.fn().mockResolvedValue(undefined),
+    pause: vi.fn(),
+    resume: vi.fn(),
+    cancel: vi.fn().mockResolvedValue(undefined),
+    retry: vi.fn(),
+    remove: vi.fn(),
+    getSnapshot: vi.fn().mockReturnValue({ sessions: {} }),
+  }
+  // eslint-disable-next-line prefer-arrow-callback
+  return { ...actual, UploadManager: vi.fn(function () { return mockInstance }) }
+})
 
 vi.mock('../../lib/api-client', () => ({
   createApiClient: () => ({
@@ -25,6 +46,14 @@ vi.mock('../../lib/chunk-reader', () => ({
   unregisterFile: vi.fn(),
   chunkReader: vi.fn().mockResolvedValue(new ArrayBuffer(0)),
 }))
+
+function getMockInstance() {
+  return vi.mocked(UploadManager).mock.results[0]?.value as {
+    setOnChange: ReturnType<typeof vi.fn>
+    remove: ReturnType<typeof vi.fn>
+    getSnapshot: ReturnType<typeof vi.fn>
+  }
+}
 
 // jsdom doesn't implement these; provide stubs
 vi.stubGlobal('URL', {
@@ -156,6 +185,32 @@ describe('useUploadManager', () => {
 
     const { result } = renderHook(() => useUploadManager())
     expect(result.current.history[0].name).toBe('restored.mp4')
+  })
+
+  it('clearTerminalSessions removes completed, failed, and canceled sessions but leaves active ones', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+
+    instance.getSnapshot.mockReturnValue({
+      sessions: {
+        'cmp-1': { status: 'completed', fileDescriptor: { id: 'cmp-1' } },
+        'fld-1': { status: 'failed',    fileDescriptor: { id: 'fld-1' } },
+        'cnc-1': { status: 'canceled',  fileDescriptor: { id: 'cnc-1' } },
+        'upl-1': { status: 'uploading', fileDescriptor: { id: 'upl-1' } },
+        'psd-1': { status: 'paused',    fileDescriptor: { id: 'psd-1' } },
+      },
+    })
+
+    act(() => {
+      result.current.clearTerminalSessions()
+    })
+
+    expect(instance.remove).toHaveBeenCalledTimes(3)
+    expect(instance.remove).toHaveBeenCalledWith('cmp-1')
+    expect(instance.remove).toHaveBeenCalledWith('fld-1')
+    expect(instance.remove).toHaveBeenCalledWith('cnc-1')
+    expect(instance.remove).not.toHaveBeenCalledWith('upl-1')
+    expect(instance.remove).not.toHaveBeenCalledWith('psd-1')
   })
 
   it('does not throw when unmounted while idle', () => {

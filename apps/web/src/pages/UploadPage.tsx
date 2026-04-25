@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useUploadManagerContext } from '../context/UploadManagerContext'
 import { DropZone } from '../components/DropZone'
 import { FileList } from '../components/FileList'
@@ -16,7 +17,14 @@ export function UploadPage() {
     retryAllFailed,
     dismiss,
     clearAll,
+    clearTerminalSessions,
   } = useUploadManagerContext()
+
+  // On unmount (navigating away), remove completed/failed/canceled sessions so
+  // their revoked blob preview URLs don't cause ERR_FILE_NOT_FOUND on return.
+  useEffect(() => {
+    return () => clearTerminalSessions()
+  }, [clearTerminalSessions])
 
   const hasFiles = Object.keys(snapshot.sessions).length > 0
 
