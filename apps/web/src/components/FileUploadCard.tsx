@@ -8,7 +8,7 @@ import { PauseIcon } from './icons/PauseIcon'
 import { PlayIcon } from './icons/PlayIcon'
 import { RetryIcon } from './icons/RetryIcon'
 import { XMarkIcon } from './icons/XMarkIcon'
-import { FileThumbnail } from './FileThumbnail.tsx'
+import { FileThumbnail } from './FileThumbnail'
 
 interface FileUploadCardProps {
   session: UploadSession

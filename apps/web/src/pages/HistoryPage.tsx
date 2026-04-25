@@ -1,9 +1,9 @@
 import { formatFileSize, formatDate } from '@media-upload/core'
 import { useUploadManagerContext } from '../context/UploadManagerContext'
 import { BASE_URL } from '../lib/api-client.ts'
-import { ClockIcon } from '../components/icons/ClockIcon.tsx'
-import { CheckIcon } from '../components/icons/CheckIcon.tsx'
-import { FileThumbnail } from '../components/FileThumbnail.tsx'
+import { ClockIcon } from '../components/icons/ClockIcon'
+import { CheckIcon } from '../components/icons/CheckIcon'
+import { FileThumbnail } from '../components/FileThumbnail'
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 

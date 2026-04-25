@@ -2,9 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import './index.css'
-import App from './App.tsx'
-import { UploadPage } from './pages/UploadPage.tsx'
-import { HistoryPage } from './pages/HistoryPage.tsx'
+import App from './App'
+import { UploadPage } from './pages/UploadPage'
+import { HistoryPage } from './pages/HistoryPage'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

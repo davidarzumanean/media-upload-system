@@ -1,5 +1,5 @@
 import { useToastState } from '../context/ToastContext'
-import { ErrorIcon } from './icons/ErrorIcon.tsx'
+import { ErrorIcon } from './icons/ErrorIcon'
 
 export function Toast() {
   const { toasts, removeToast } = useToastState()

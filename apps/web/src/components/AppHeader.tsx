@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { CloudUploadIcon } from './icons/CloudUploadIcon.tsx'
+import { CloudUploadIcon } from './icons/CloudUploadIcon'
 
 export function AppHeader() {
   return (
