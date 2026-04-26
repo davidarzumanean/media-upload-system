@@ -37,6 +37,7 @@ export interface UseUploadManagerReturn {
   history: HistoryEntry[]
   clearHistory: () => void
   clearAllUploads: () => void
+  retryAllFailed: () => void
 }
 
 export function useUploadManager(): UseUploadManagerReturn {
@@ -253,6 +254,15 @@ export function useUploadManager(): UseUploadManagerReturn {
     AsyncStorage.removeItem(HISTORY_KEY).catch(() => {})
   }, [])
 
+  const retryAllFailed = useCallback(() => {
+    const snap = manager.getSnapshot()
+    for (const [id, session] of Object.entries(snap.sessions)) {
+      if (session.status === 'failed') {
+        manager.retry(id)
+      }
+    }
+  }, [manager])
+
   const clearAllUploads = useCallback(() => {
     const snap = manager.getSnapshot()
     for (const [id, s] of Object.entries(snap.sessions)) {
@@ -283,5 +293,6 @@ export function useUploadManager(): UseUploadManagerReturn {
     history,
     clearHistory,
     clearAllUploads,
+    retryAllFailed,
   }
 }

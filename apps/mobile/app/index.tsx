@@ -26,10 +26,12 @@ export default function UploadScreen() {
     retry,
     dismiss,
     clearAllUploads,
+    retryAllFailed,
   } = useUploadManagerContext()
   const { addToast } = useToast()
 
   const sessions = Object.values(snapshot.sessions) as UploadSession[]
+  const hasFailed = sessions.some((s) => s.status === 'failed')
 
   // ── File pickers ────────────────────────────────────────────────────────
 
@@ -130,12 +132,22 @@ export default function UploadScreen() {
                 {sessions.length} {sessions.length === 1 ? 'file' : 'files'}
               </Text>
 
-              <TouchableOpacity
-                onPress={clearAllUploads}
-                accessibilityLabel="Clear all uploads"
-              >
-                <Text style={styles.clearBtn}>Clear all</Text>
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                {hasFailed && (
+                  <TouchableOpacity
+                    onPress={retryAllFailed}
+                    accessibilityLabel="Retry all failed uploads"
+                  >
+                    <Text style={styles.retryBtn}>Retry all</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={clearAllUploads}
+                  accessibilityLabel="Clear all uploads"
+                >
+                  <Text style={styles.clearBtn}>Clear all</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : null
         }
@@ -204,6 +216,16 @@ const styles = StyleSheet.create({
     color: '#64748B', // slate-500 — structural
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  retryBtn: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '500',
   },
   clearBtn: {
     fontSize: 14,

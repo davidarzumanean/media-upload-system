@@ -52,6 +52,7 @@ export interface ApiClient {
     signal?: AbortSignal,
   ): Promise<void>
   finalize(uploadId: string): Promise<void>
+  getStatus(uploadId: string): Promise<{ status: UploadStatus }>
   cancel(uploadId: string): Promise<void>
 }
 

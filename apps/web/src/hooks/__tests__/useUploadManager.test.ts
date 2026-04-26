@@ -26,7 +26,12 @@ vi.mock('@media-upload/core', async (importOriginal) => {
     getSnapshot: vi.fn().mockReturnValue({ sessions: {} }),
   }
   // eslint-disable-next-line prefer-arrow-callback
-  return { ...actual, UploadManager: vi.fn(function () { return mockInstance }) }
+  return {
+    ...actual,
+    UploadManager: vi.fn(function () {
+      return mockInstance
+    }),
+  }
 })
 
 vi.mock('../../lib/api-client', () => ({
@@ -196,10 +201,10 @@ describe('useUploadManager', () => {
     instance.getSnapshot.mockReturnValue({
       sessions: {
         'cmp-1': { status: 'completed', fileDescriptor: { id: 'cmp-1' } },
-        'fld-1': { status: 'failed',    fileDescriptor: { id: 'fld-1' } },
-        'cnc-1': { status: 'canceled',  fileDescriptor: { id: 'cnc-1' } },
+        'fld-1': { status: 'failed', fileDescriptor: { id: 'fld-1' } },
+        'cnc-1': { status: 'canceled', fileDescriptor: { id: 'cnc-1' } },
         'upl-1': { status: 'uploading', fileDescriptor: { id: 'upl-1' } },
-        'psd-1': { status: 'paused',    fileDescriptor: { id: 'psd-1' } },
+        'psd-1': { status: 'paused', fileDescriptor: { id: 'psd-1' } },
       },
     })
 
@@ -240,12 +245,12 @@ describe('useUploadManager', () => {
       sessions: {
         'upl-1': { status: 'uploading', fileDescriptor: { id: 'upl-1' } },
         'cmp-1': { status: 'completed', fileDescriptor: { id: 'cmp-1' } },
-        'psd-1': { status: 'paused',    fileDescriptor: { id: 'psd-1' } },
+        'psd-1': { status: 'paused', fileDescriptor: { id: 'psd-1' } },
       },
     })
 
     act(() => {
-      result.current.clearAll()
+      result.current.clearAllUploads()
     })
 
     // All three must be absent from the visible snapshot
@@ -261,15 +266,15 @@ describe('useUploadManager', () => {
     instance.getSnapshot.mockReturnValue({
       sessions: {
         'cmp-1': { status: 'completed', fileDescriptor: { id: 'cmp-1' } },
-        'fld-1': { status: 'failed',    fileDescriptor: { id: 'fld-1' } },
-        'cnc-1': { status: 'canceled',  fileDescriptor: { id: 'cnc-1' } },
+        'fld-1': { status: 'failed', fileDescriptor: { id: 'fld-1' } },
+        'cnc-1': { status: 'canceled', fileDescriptor: { id: 'cnc-1' } },
         'upl-1': { status: 'uploading', fileDescriptor: { id: 'upl-1' } },
-        'psd-1': { status: 'paused',    fileDescriptor: { id: 'psd-1' } },
+        'psd-1': { status: 'paused', fileDescriptor: { id: 'psd-1' } },
       },
     })
 
     act(() => {
-      result.current.clearAll()
+      result.current.clearAllUploads()
     })
 
     expect(instance.remove).toHaveBeenCalledTimes(3)
@@ -286,7 +291,9 @@ describe('useUploadManager', () => {
     instance.getSnapshot.mockReturnValue({ sessions: {} })
 
     expect(() => {
-      act(() => { result.current.clearAll() })
+      act(() => {
+        result.current.clearAllUploads()
+      })
     }).not.toThrow()
     expect(instance.remove).not.toHaveBeenCalled()
   })
@@ -301,10 +308,14 @@ describe('useUploadManager', () => {
       },
     })
 
-    act(() => { result.current.clearAll() })
+    act(() => {
+      result.current.clearAllUploads()
+    })
     // After first call, session is removed from manager — second call sees empty snapshot
     instance.getSnapshot.mockReturnValue({ sessions: {} })
-    act(() => { result.current.clearAll() })
+    act(() => {
+      result.current.clearAllUploads()
+    })
 
     // remove called only once (only on first call when session existed)
     expect(instance.remove).toHaveBeenCalledTimes(1)
@@ -322,7 +333,10 @@ describe('useUploadManager', () => {
       sessions: {
         'failed-1': { status: 'failed', fileDescriptor: { id: 'failed-1' } },
         'failed-2': { status: 'failed', fileDescriptor: { id: 'failed-2' } },
-        'uploading-1': { status: 'uploading', fileDescriptor: { id: 'uploading-1' } },
+        'uploading-1': {
+          status: 'uploading',
+          fileDescriptor: { id: 'uploading-1' },
+        },
       },
     })
 
@@ -341,14 +355,20 @@ describe('useUploadManager', () => {
   it('reports initial speed of 0 for a new uploading session', () => {
     const { result } = renderHook(() => useUploadManager())
     const instance = getMockInstance()
-    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+    const onChange: (snap: unknown) => void =
+      instance.setOnChange.mock.calls[0][0]
 
     act(() => {
       onChange({
         sessions: {
           'uid-1': {
             uploadId: 'uid-1',
-            fileDescriptor: { id: 'fd-1', name: 'a.jpg', size: 1_000_000, mimeType: 'image/jpeg' },
+            fileDescriptor: {
+              id: 'fd-1',
+              name: 'a.jpg',
+              size: 1_000_000,
+              mimeType: 'image/jpeg',
+            },
             totalChunks: 10,
             uploadedChunks: [],
             status: 'uploading',
@@ -369,11 +389,17 @@ describe('useUploadManager', () => {
 
     const { result } = renderHook(() => useUploadManager())
     const instance = getMockInstance()
-    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+    const onChange: (snap: unknown) => void =
+      instance.setOnChange.mock.calls[0][0]
 
     const baseSession = {
       uploadId: 'uid-1',
-      fileDescriptor: { id: 'fd-1', name: 'a.jpg', size: 1_000_000, mimeType: 'image/jpeg' },
+      fileDescriptor: {
+        id: 'fd-1',
+        name: 'a.jpg',
+        size: 1_000_000,
+        mimeType: 'image/jpeg',
+      },
       totalChunks: 10,
       uploadedChunks: [],
       status: 'uploading',
@@ -403,14 +429,20 @@ describe('useUploadManager', () => {
   it('saves completed upload to localStorage history', () => {
     const { result } = renderHook(() => useUploadManager())
     const instance = getMockInstance()
-    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+    const onChange: (snap: unknown) => void =
+      instance.setOnChange.mock.calls[0][0]
 
     act(() => {
       onChange({
         sessions: {
           'uid-done': {
             uploadId: 'uid-done',
-            fileDescriptor: { id: 'fd-1', name: 'photo.jpg', size: 100, mimeType: 'image/jpeg' },
+            fileDescriptor: {
+              id: 'fd-1',
+              name: 'photo.jpg',
+              size: 100,
+              mimeType: 'image/jpeg',
+            },
             totalChunks: 1,
             uploadedChunks: [0],
             status: 'completed',
@@ -432,13 +464,19 @@ describe('useUploadManager', () => {
   it('does not duplicate a session that is already in history', () => {
     const { result } = renderHook(() => useUploadManager())
     const instance = getMockInstance()
-    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+    const onChange: (snap: unknown) => void =
+      instance.setOnChange.mock.calls[0][0]
 
     const completedSnap = {
       sessions: {
         'uid-done': {
           uploadId: 'uid-done',
-          fileDescriptor: { id: 'fd-1', name: 'photo.jpg', size: 100, mimeType: 'image/jpeg' },
+          fileDescriptor: {
+            id: 'fd-1',
+            name: 'photo.jpg',
+            size: 100,
+            mimeType: 'image/jpeg',
+          },
           totalChunks: 1,
           uploadedChunks: [0],
           status: 'completed',
@@ -448,8 +486,12 @@ describe('useUploadManager', () => {
       },
     }
 
-    act(() => { onChange(completedSnap) })
-    act(() => { onChange(completedSnap) })
+    act(() => {
+      onChange(completedSnap)
+    })
+    act(() => {
+      onChange(completedSnap)
+    })
 
     expect(result.current.history).toHaveLength(1)
   })
@@ -459,7 +501,8 @@ describe('useUploadManager', () => {
   it('revokes the object URL when a session reaches a terminal status', () => {
     const { result } = renderHook(() => useUploadManager())
     const instance = getMockInstance()
-    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+    const onChange: (snap: unknown) => void =
+      instance.setOnChange.mock.calls[0][0]
 
     act(() => {
       result.current.addFiles([makeImageFile('hero.jpg')])
@@ -497,9 +540,12 @@ describe('useUploadManager', () => {
   it('should revoke blob URL and unregister file on completed status', () => {
     const { result } = renderHook(() => useUploadManager())
     const instance = getMockInstance()
-    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+    const onChange: (snap: unknown) => void =
+      instance.setOnChange.mock.calls[0][0]
 
-    act(() => { result.current.addFiles([makeImageFile('hero.jpg')]) })
+    act(() => {
+      result.current.addFiles([makeImageFile('hero.jpg')])
+    })
 
     const session = Object.values(result.current.snapshot.sessions)[0]
     const { id: fileId, previewUri } = session.fileDescriptor
@@ -509,8 +555,18 @@ describe('useUploadManager', () => {
         sessions: {
           'server-uid': {
             uploadId: 'server-uid',
-            fileDescriptor: { id: fileId, name: 'hero.jpg', size: 11, mimeType: 'image/jpeg', previewUri },
-            totalChunks: 1, uploadedChunks: [0], status: 'completed', progress: 1, retries: {},
+            fileDescriptor: {
+              id: fileId,
+              name: 'hero.jpg',
+              size: 11,
+              mimeType: 'image/jpeg',
+              previewUri,
+            },
+            totalChunks: 1,
+            uploadedChunks: [0],
+            status: 'completed',
+            progress: 1,
+            retries: {},
           },
         },
       })
@@ -523,9 +579,12 @@ describe('useUploadManager', () => {
   it('should revoke blob URL and unregister file on canceled status', () => {
     const { result } = renderHook(() => useUploadManager())
     const instance = getMockInstance()
-    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+    const onChange: (snap: unknown) => void =
+      instance.setOnChange.mock.calls[0][0]
 
-    act(() => { result.current.addFiles([makeImageFile('hero.jpg')]) })
+    act(() => {
+      result.current.addFiles([makeImageFile('hero.jpg')])
+    })
 
     const session = Object.values(result.current.snapshot.sessions)[0]
     const { id: fileId, previewUri } = session.fileDescriptor
@@ -535,8 +594,18 @@ describe('useUploadManager', () => {
         sessions: {
           'server-uid': {
             uploadId: 'server-uid',
-            fileDescriptor: { id: fileId, name: 'hero.jpg', size: 11, mimeType: 'image/jpeg', previewUri },
-            totalChunks: 1, uploadedChunks: [], status: 'canceled', progress: 0, retries: {},
+            fileDescriptor: {
+              id: fileId,
+              name: 'hero.jpg',
+              size: 11,
+              mimeType: 'image/jpeg',
+              previewUri,
+            },
+            totalChunks: 1,
+            uploadedChunks: [],
+            status: 'canceled',
+            progress: 0,
+            retries: {},
           },
         },
       })
@@ -549,9 +618,12 @@ describe('useUploadManager', () => {
   it('should not revoke blob URL or unregister file on failed status', () => {
     const { result } = renderHook(() => useUploadManager())
     const instance = getMockInstance()
-    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+    const onChange: (snap: unknown) => void =
+      instance.setOnChange.mock.calls[0][0]
 
-    act(() => { result.current.addFiles([makeImageFile('hero.jpg')]) })
+    act(() => {
+      result.current.addFiles([makeImageFile('hero.jpg')])
+    })
 
     const session = Object.values(result.current.snapshot.sessions)[0]
     const { id: fileId, previewUri } = session.fileDescriptor
@@ -561,8 +633,18 @@ describe('useUploadManager', () => {
         sessions: {
           'server-uid': {
             uploadId: 'server-uid',
-            fileDescriptor: { id: fileId, name: 'hero.jpg', size: 11, mimeType: 'image/jpeg', previewUri },
-            totalChunks: 1, uploadedChunks: [], status: 'failed', progress: 0, retries: {},
+            fileDescriptor: {
+              id: fileId,
+              name: 'hero.jpg',
+              size: 11,
+              mimeType: 'image/jpeg',
+              previewUri,
+            },
+            totalChunks: 1,
+            uploadedChunks: [],
+            status: 'failed',
+            progress: 0,
+            retries: {},
           },
         },
       })

@@ -76,7 +76,7 @@ describe('api-client', () => {
 
     it('converts ArrayBuffer to base64 before uploading', async () => {
       mockFetch({ ok: true })
-      const btoaSpy = jest.spyOn(global, 'btoa')
+      const btoaSpy = jest.spyOn(globalThis, 'btoa')
 
       const data = new ArrayBuffer(16)
       new Uint8Array(data).fill(0x41) // fill with 'A' bytes
