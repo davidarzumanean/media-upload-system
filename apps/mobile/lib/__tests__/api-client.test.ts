@@ -74,6 +74,25 @@ describe('api-client', () => {
       expect(call[1].body).toBeInstanceOf(FormData)
     })
 
+    it('converts ArrayBuffer to base64 before uploading', async () => {
+      mockFetch({ ok: true })
+      const btoaSpy = jest.spyOn(global, 'btoa')
+
+      const data = new ArrayBuffer(16)
+      new Uint8Array(data).fill(0x41) // fill with 'A' bytes
+      await client.uploadChunk('uid', 0, data)
+
+      expect(btoaSpy).toHaveBeenCalled()
+      btoaSpy.mockRestore()
+    })
+
+    it('throws when a Blob is passed instead of an ArrayBuffer', async () => {
+      const blob = new Blob(['data'], { type: 'application/octet-stream' })
+      await expect(
+        client.uploadChunk('uid', 0, blob),
+      ).rejects.toThrow('Expected ArrayBuffer')
+    })
+
     it('throws on non-ok response', async () => {
       mockFetch({ ok: false, status: 500, statusText: 'Server Error' })
       await expect(

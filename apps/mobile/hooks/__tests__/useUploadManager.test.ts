@@ -5,6 +5,22 @@ jest.mock('@/context/ToastContext', () => ({
   useToast: jest.fn(() => ({ addToast: jest.fn() })),
 }))
 
+jest.mock('@/lib/api-client', () => ({
+  createApiClient: () => ({
+    initiate: jest.fn().mockResolvedValue({ uploadId: 'server-uid', totalChunks: 1 }),
+    uploadChunk: jest.fn().mockResolvedValue(undefined),
+    finalize: jest.fn().mockResolvedValue(undefined),
+    getStatus: jest.fn().mockResolvedValue({ status: 'uploading' }),
+    cancel: jest.fn().mockResolvedValue(undefined),
+  }),
+}))
+
+jest.mock('@/lib/chunk-reader', () => ({
+  registerFile: jest.fn(),
+  unregisterFile: jest.fn(),
+  chunkReader: jest.fn().mockResolvedValue(new ArrayBuffer(0)),
+}))
+
 // Mock the UploadManager while keeping real validateFiles / chunking from core.
 jest.mock('@media-upload/core', () => {
   const actual = jest.requireActual('@media-upload/core')
@@ -25,7 +41,6 @@ jest.mock('@media-upload/core', () => {
   }
 })
 
-// Silence AsyncStorage errors in test output
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn().mockResolvedValue(null),
   setItem: jest.fn().mockResolvedValue(undefined),
@@ -33,9 +48,25 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }))
 
 import { UploadManager } from '@media-upload/core'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { registerFile, unregisterFile } from '@/lib/chunk-reader'
 
 function getMockInstance() {
   return (UploadManager as jest.Mock).mock.results[0]?.value
+}
+
+function getOnChange(instance: ReturnType<typeof getMockInstance>) {
+  return instance.setOnChange.mock.calls[0][0] as (snap: unknown) => void
+}
+
+function makeFileInput(overrides: Partial<{ uri: string; name: string; size: number; mimeType: string }> = {}) {
+  return {
+    uri: 'file:///photo.jpg',
+    name: 'photo.jpg',
+    size: 1024,
+    mimeType: 'image/jpeg',
+    ...overrides,
+  }
 }
 
 describe('useUploadManager', () => {
@@ -102,5 +133,229 @@ describe('useUploadManager', () => {
 
     // Should not throw
     unmount()
+  })
+
+  // ── addFiles ──────────────────────────────────────────────────────────────
+
+  it('addFiles synchronously injects a queued session per file', () => {
+    const { result } = renderHook(() => useUploadManager())
+
+    act(() => {
+      result.current.addFiles([
+        makeFileInput({ name: 'a.jpg', mimeType: 'image/jpeg' }),
+        makeFileInput({ uri: 'file:///b.mp4', name: 'b.mp4', mimeType: 'video/mp4' }),
+      ])
+    })
+
+    const sessions = Object.values(result.current.snapshot.sessions)
+    expect(sessions).toHaveLength(2)
+    expect(sessions.every((s) => s.status === 'queued')).toBe(true)
+  })
+
+  it('addFiles sets previewUri to the file URI for images', () => {
+    const { result } = renderHook(() => useUploadManager())
+
+    act(() => {
+      result.current.addFiles([
+        makeFileInput({ uri: 'file:///photo.jpg', name: 'photo.jpg', mimeType: 'image/jpeg' }),
+      ])
+    })
+
+    const session = Object.values(result.current.snapshot.sessions)[0]
+    expect(session.fileDescriptor.previewUri).toBe('file:///photo.jpg')
+  })
+
+  it('addFiles omits previewUri for non-image files', () => {
+    const { result } = renderHook(() => useUploadManager())
+
+    act(() => {
+      result.current.addFiles([
+        makeFileInput({ uri: 'file:///clip.mp4', name: 'clip.mp4', mimeType: 'video/mp4' }),
+      ])
+    })
+
+    const session = Object.values(result.current.snapshot.sessions)[0]
+    expect(session.fileDescriptor.previewUri).toBeUndefined()
+  })
+
+  it('addFiles calls registerFile for each valid file', () => {
+    const { result } = renderHook(() => useUploadManager())
+
+    act(() => {
+      result.current.addFiles([makeFileInput()])
+    })
+
+    expect(registerFile).toHaveBeenCalledTimes(1)
+  })
+
+  // ── dismiss ───────────────────────────────────────────────────────────────
+
+  it('dismiss hides the session from snapshot and calls manager.remove', () => {
+    const { result } = renderHook(() => useUploadManager())
+
+    act(() => {
+      result.current.addFiles([makeFileInput()])
+    })
+
+    const id = Object.keys(result.current.snapshot.sessions)[0]
+
+    act(() => {
+      result.current.dismiss(id)
+    })
+
+    expect(result.current.snapshot.sessions[id]).toBeUndefined()
+    expect(getMockInstance().remove).toHaveBeenCalledWith(id)
+  })
+
+  // ── history ───────────────────────────────────────────────────────────────
+
+  it('loads history from AsyncStorage on mount', async () => {
+    const entry = {
+      id: 'uid-x',
+      name: 'video.mp4',
+      size: 4096,
+      mimeType: 'video/mp4',
+      completedAt: '2024-01-01T00:00:00Z',
+    }
+    ;(AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+      JSON.stringify([entry]),
+    )
+
+    const { result } = renderHook(() => useUploadManager())
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(result.current.history[0].name).toBe('video.mp4')
+  })
+
+  it('persists completed upload to AsyncStorage', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    const onChange = getOnChange(instance)
+
+    act(() => {
+      onChange({
+        sessions: {
+          'uid-done': {
+            uploadId: 'uid-done',
+            fileDescriptor: { id: 'fd-1', name: 'photo.jpg', size: 100, mimeType: 'image/jpeg' },
+            totalChunks: 1,
+            uploadedChunks: [0],
+            status: 'completed',
+            progress: 1,
+            retries: {},
+          },
+        },
+      })
+    })
+
+    expect(result.current.history).toHaveLength(1)
+    expect(result.current.history[0].name).toBe('photo.jpg')
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      'media-upload-history',
+      expect.stringContaining('photo.jpg'),
+    )
+  })
+
+  it('clearHistory empties the list and calls AsyncStorage.removeItem', async () => {
+    const entry = {
+      id: 'uid-x',
+      name: 'video.mp4',
+      size: 4096,
+      mimeType: 'video/mp4',
+      completedAt: '2024-01-01T00:00:00Z',
+    }
+    ;(AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+      JSON.stringify([entry]),
+    )
+
+    const { result } = renderHook(() => useUploadManager())
+    await act(async () => { await Promise.resolve() })
+
+    expect(result.current.history).toHaveLength(1)
+
+    act(() => { result.current.clearHistory() })
+
+    expect(result.current.history).toHaveLength(0)
+    expect(AsyncStorage.removeItem).toHaveBeenCalledWith('media-upload-history')
+  })
+
+  // ── speed tracking ────────────────────────────────────────────────────────
+
+  it('reports initial speed of 0 for a new uploading session', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const onChange = getOnChange(getMockInstance())
+
+    act(() => {
+      onChange({
+        sessions: {
+          'uid-1': {
+            uploadId: 'uid-1',
+            fileDescriptor: { id: 'fd-1', name: 'a.jpg', size: 1_000_000, mimeType: 'image/jpeg' },
+            totalChunks: 10,
+            uploadedChunks: [],
+            status: 'uploading',
+            progress: 0,
+            retries: {},
+          },
+        },
+      })
+    })
+
+    expect(result.current.speeds['uid-1']).toBe(0)
+  })
+
+  // ── unregisterFile ────────────────────────────────────────────────────────
+
+  it('calls unregisterFile when a session reaches a terminal status', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const onChange = getOnChange(getMockInstance())
+
+    act(() => {
+      onChange({
+        sessions: {
+          'uid-1': {
+            uploadId: 'uid-1',
+            fileDescriptor: { id: 'fd-1', name: 'a.jpg', size: 100, mimeType: 'image/jpeg' },
+            totalChunks: 1,
+            uploadedChunks: [0],
+            status: 'completed',
+            progress: 1,
+            retries: {},
+          },
+        },
+      })
+    })
+
+    expect(unregisterFile).toHaveBeenCalledWith('fd-1')
+  })
+
+  it('calls unregisterFile on failed and canceled statuses too', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const onChange = getOnChange(getMockInstance())
+
+    const makeSession = (id: string, status: string) => ({
+      uploadId: id,
+      fileDescriptor: { id, name: 'a.jpg', size: 100, mimeType: 'image/jpeg' },
+      totalChunks: 1,
+      uploadedChunks: [],
+      status,
+      progress: 0,
+      retries: {},
+    })
+
+    act(() => {
+      onChange({
+        sessions: {
+          'fd-fail': makeSession('fd-fail', 'failed'),
+          'fd-cancel': makeSession('fd-cancel', 'canceled'),
+        },
+      })
+    })
+
+    expect(unregisterFile).toHaveBeenCalledWith('fd-fail')
+    expect(unregisterFile).toHaveBeenCalledWith('fd-cancel')
   })
 })
