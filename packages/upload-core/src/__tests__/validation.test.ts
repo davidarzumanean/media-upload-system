@@ -111,4 +111,33 @@ describe('validateFiles', () => {
     expect(valid).toHaveLength(0)
     expect(errors).toHaveLength(0)
   })
+
+  it('accepts a file whose size equals maxSizeBytes exactly (boundary)', () => {
+    const files = [makeFile({ id: '1', size: 1000 })]
+    const { valid, errors } = validateFiles(files, { maxSizeBytes: 1000 })
+    expect(valid).toHaveLength(1)
+    expect(errors).toHaveLength(0)
+  })
+
+  it('preserves original order in the valid array', () => {
+    const files = [
+      makeFile({ id: 'c', name: 'c.jpg' }),
+      makeFile({ id: 'a', name: 'a.jpg' }),
+      makeFile({ id: 'b', name: 'b.jpg' }),
+    ]
+    const { valid } = validateFiles(files)
+    expect(valid.map((f) => f.id)).toEqual(['c', 'a', 'b'])
+  })
+
+  it('returns both valid and error arrays correctly for a mixed batch', () => {
+    const files = [
+      makeFile({ id: '1', mimeType: 'image/jpeg', size: 500 }),
+      makeFile({ id: '2', mimeType: 'application/pdf', name: 'doc.pdf' }),
+      makeFile({ id: '3', mimeType: 'video/mp4', name: 'clip.mp4', size: 200 }),
+      makeFile({ id: '4', size: 0, name: 'empty.jpg' }),
+    ]
+    const { valid, errors } = validateFiles(files)
+    expect(valid.map((f) => f.id)).toEqual(['1', '3'])
+    expect(errors.map((e) => e.fileId)).toEqual(['2', '4'])
+  })
 })

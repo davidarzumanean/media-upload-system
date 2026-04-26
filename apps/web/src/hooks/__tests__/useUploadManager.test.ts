@@ -227,4 +227,188 @@ describe('useUploadManager', () => {
 
     expect(() => unmount()).not.toThrow()
   })
+
+  // ── retryAllFailed ────────────────────────────────────────────────────────
+
+  it('retryAllFailed calls manager.retry for every failed session only', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance() as ReturnType<typeof getMockInstance> & {
+      retry: ReturnType<typeof vi.fn>
+    }
+
+    instance.getSnapshot.mockReturnValue({
+      sessions: {
+        'failed-1': { status: 'failed', fileDescriptor: { id: 'failed-1' } },
+        'failed-2': { status: 'failed', fileDescriptor: { id: 'failed-2' } },
+        'uploading-1': { status: 'uploading', fileDescriptor: { id: 'uploading-1' } },
+      },
+    })
+
+    act(() => {
+      result.current.retryAllFailed()
+    })
+
+    expect(instance.retry).toHaveBeenCalledTimes(2)
+    expect(instance.retry).toHaveBeenCalledWith('failed-1')
+    expect(instance.retry).toHaveBeenCalledWith('failed-2')
+    expect(instance.retry).not.toHaveBeenCalledWith('uploading-1')
+  })
+
+  // ── speed tracking ────────────────────────────────────────────────────────
+
+  it('reports initial speed of 0 for a new uploading session', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+
+    act(() => {
+      onChange({
+        sessions: {
+          'uid-1': {
+            uploadId: 'uid-1',
+            fileDescriptor: { id: 'fd-1', name: 'a.jpg', size: 1_000_000, mimeType: 'image/jpeg' },
+            totalChunks: 10,
+            uploadedChunks: [],
+            status: 'uploading',
+            progress: 0,
+            retries: {},
+          },
+        },
+      })
+    })
+
+    expect(result.current.speeds['uid-1']).toBe(0)
+  })
+
+  it('applies exponential smoothing after subsequent upload events', () => {
+    vi.useFakeTimers()
+    const t0 = new Date('2024-01-01T00:00:00.000Z')
+    vi.setSystemTime(t0)
+
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+
+    const baseSession = {
+      uploadId: 'uid-1',
+      fileDescriptor: { id: 'fd-1', name: 'a.jpg', size: 1_000_000, mimeType: 'image/jpeg' },
+      totalChunks: 10,
+      uploadedChunks: [],
+      status: 'uploading',
+      retries: {},
+    }
+
+    // Baseline at 0%
+    act(() => {
+      onChange({ sessions: { 'uid-1': { ...baseSession, progress: 0 } } })
+    })
+    expect(result.current.speeds['uid-1']).toBe(0)
+
+    // 1 second later, 50% progress = 500 KB uploaded
+    vi.setSystemTime(new Date(t0.getTime() + 1000))
+    act(() => {
+      onChange({ sessions: { 'uid-1': { ...baseSession, progress: 0.5 } } })
+    })
+
+    // instant = 500_000 B/s; smoothed = 0 * 0.6 + 500_000 * 0.4 = 200_000
+    expect(result.current.speeds['uid-1']).toBeCloseTo(200_000, -2)
+
+    vi.useRealTimers()
+  })
+
+  // ── history persistence ───────────────────────────────────────────────────
+
+  it('saves completed upload to localStorage history', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+
+    act(() => {
+      onChange({
+        sessions: {
+          'uid-done': {
+            uploadId: 'uid-done',
+            fileDescriptor: { id: 'fd-1', name: 'photo.jpg', size: 100, mimeType: 'image/jpeg' },
+            totalChunks: 1,
+            uploadedChunks: [0],
+            status: 'completed',
+            progress: 1,
+            retries: {},
+          },
+        },
+      })
+    })
+
+    expect(result.current.history).toHaveLength(1)
+    expect(result.current.history[0].id).toBe('uid-done')
+    expect(result.current.history[0].name).toBe('photo.jpg')
+
+    const stored = JSON.parse(localStorage.getItem('media-upload-history')!)
+    expect(stored[0].name).toBe('photo.jpg')
+  })
+
+  it('does not duplicate a session that is already in history', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+
+    const completedSnap = {
+      sessions: {
+        'uid-done': {
+          uploadId: 'uid-done',
+          fileDescriptor: { id: 'fd-1', name: 'photo.jpg', size: 100, mimeType: 'image/jpeg' },
+          totalChunks: 1,
+          uploadedChunks: [0],
+          status: 'completed',
+          progress: 1,
+          retries: {},
+        },
+      },
+    }
+
+    act(() => { onChange(completedSnap) })
+    act(() => { onChange(completedSnap) })
+
+    expect(result.current.history).toHaveLength(1)
+  })
+
+  // ── preview URL revocation ────────────────────────────────────────────────
+
+  it('revokes the object URL when a session reaches a terminal status', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+
+    act(() => {
+      result.current.addFiles([makeImageFile('hero.jpg')])
+    })
+
+    const session = Object.values(result.current.snapshot.sessions)[0]
+    const { id: fileId, previewUri } = session.fileDescriptor
+    expect(previewUri).toBe('blob:test-preview-url')
+
+    act(() => {
+      onChange({
+        sessions: {
+          'server-uid': {
+            uploadId: 'server-uid',
+            fileDescriptor: {
+              id: fileId,
+              name: 'hero.jpg',
+              size: 11,
+              mimeType: 'image/jpeg',
+              previewUri,
+            },
+            totalChunks: 1,
+            uploadedChunks: [0],
+            status: 'completed',
+            progress: 1,
+            retries: {},
+          },
+        },
+      })
+    })
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test-preview-url')
+  })
 })

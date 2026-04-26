@@ -308,6 +308,131 @@ describe('UploadManager', () => {
     expect(finalSnap.sessions['uid-a'].status).toBe('completed')
   })
 
+  // ── addFiles edge cases ───────────────────────────────────────────────────
+
+  it('addFiles with an empty array does not throw and leaves snapshot empty', async () => {
+    await manager.addFiles([])
+    expect(Object.keys(manager.getSnapshot().sessions)).toHaveLength(0)
+  })
+
+  // ── pause / resume / retry no-ops ─────────────────────────────────────────
+
+  it('pause on a completed session is a no-op', async () => {
+    await manager.addFiles([makeFile('a')])
+    await manager.start()
+    await flushPromises()
+
+    expect(manager.getSnapshot().sessions['uid-a'].status).toBe('completed')
+    manager.pause('uid-a')
+    expect(manager.getSnapshot().sessions['uid-a'].status).toBe('completed')
+  })
+
+  it('resume on an uploading session (not paused) is a no-op', async () => {
+    ;(api.uploadChunk as ReturnType<typeof vi.fn>).mockImplementation(
+      () => new Promise<void>((resolve) => setTimeout(resolve, 50)),
+    )
+
+    await manager.addFiles([makeFile('a')])
+    await manager.start()
+
+    // session is 'uploading' — resume must not re-enqueue chunks
+    const callsBefore = (api.uploadChunk as ReturnType<typeof vi.fn>).mock.calls.length
+    manager.resume('uid-a')
+    await flushPromises()
+
+    const snap = manager.getSnapshot()
+    expect(snap.sessions['uid-a'].status).toBe('completed')
+    // Total calls == 3 (one per chunk) — no extra from the spurious resume
+    expect(api.uploadChunk).toHaveBeenCalledTimes(3)
+  })
+
+  it('retry on an uploading session is a no-op', async () => {
+    ;(api.uploadChunk as ReturnType<typeof vi.fn>).mockImplementation(
+      () => new Promise<void>(() => {}), // never resolves
+    )
+
+    await manager.addFiles([makeFile('a')])
+    await manager.start()
+
+    expect(manager.getSnapshot().sessions['uid-a'].status).toBe('uploading')
+    manager.retry('uid-a')
+    // Status unchanged — retry guard returns early
+    expect(manager.getSnapshot().sessions['uid-a'].status).toBe('uploading')
+  })
+
+  // ── remove edge cases ─────────────────────────────────────────────────────
+
+  it('remove on an uploading session is a no-op', async () => {
+    ;(api.uploadChunk as ReturnType<typeof vi.fn>).mockImplementation(
+      () => new Promise<void>(() => {}), // never resolves
+    )
+
+    await manager.addFiles([makeFile('a')])
+    await manager.start()
+
+    manager.remove('uid-a')
+    expect(manager.getSnapshot().sessions['uid-a']).toBeDefined()
+  })
+
+  it('remove on an unknown uploadId does not throw', () => {
+    expect(() => manager.remove('does-not-exist')).not.toThrow()
+  })
+
+  // ── maxRetries boundary ───────────────────────────────────────────────────
+
+  it('maxRetries=0 marks a session failed on the very first chunk error', async () => {
+    const zeroRetryManager = new UploadManager({
+      apiClient: makeApiClient({
+        uploadChunk: vi.fn().mockRejectedValue(new Error('instant fail')),
+      }),
+      chunkReader: reader,
+      maxConcurrent: 3,
+      maxRetries: 0,
+      retryDelay: () => 0,
+    })
+
+    await zeroRetryManager.addFiles([makeFile('a')])
+    await zeroRetryManager.start()
+    await flushPromises()
+
+    const snap = zeroRetryManager.getSnapshot()
+    expect(snap.sessions['uid-a'].status).toBe('failed')
+    expect(snap.sessions['uid-a'].error).toBe('instant fail')
+  })
+
+  // ── maxConcurrent=1 ───────────────────────────────────────────────────────
+
+  it('maxConcurrent=1 never runs more than one chunk at a time', async () => {
+    let maxInFlight = 0
+    let current = 0
+
+    ;(api.uploadChunk as ReturnType<typeof vi.fn>).mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          current++
+          maxInFlight = Math.max(maxInFlight, current)
+          setTimeout(() => {
+            current--
+            resolve()
+          }, 5)
+        }),
+    )
+
+    const m = new UploadManager({
+      apiClient: api,
+      chunkReader: reader,
+      maxConcurrent: 1,
+      maxRetries: 3,
+    })
+
+    await m.addFiles([makeFile('a'), makeFile('b')])
+    await m.start()
+    await flushPromises()
+
+    expect(maxInFlight).toBe(1)
+    expect(api.uploadChunk).toHaveBeenCalledTimes(6) // 2 files × 3 chunks
+  })
+
   it('calls onChange on every state transition', async () => {
     const file = makeFile('a')
     await manager.addFiles([file])

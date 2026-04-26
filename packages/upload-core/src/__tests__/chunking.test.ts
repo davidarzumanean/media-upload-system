@@ -18,6 +18,11 @@ describe('calculateTotalChunks', () => {
     expect(calculateTotalChunks(CHUNK_SIZE * 5)).toBe(5)
     expect(calculateTotalChunks(CHUNK_SIZE * 5 + 1)).toBe(6)
   })
+
+  it('returns -0 for negative file sizes (documents current behaviour)', () => {
+    // Math.ceil(-1 / CHUNK_SIZE) = -0 — callers should guard against negative sizes
+    expect(calculateTotalChunks(-1)).toBe(-0)
+  })
 })
 
 describe('getRetryDelay', () => {
@@ -34,5 +39,10 @@ describe('getRetryDelay', () => {
   it('caps the delay at 30 seconds', () => {
     expect(getRetryDelay(10)).toBe(30_000)
     expect(getRetryDelay(100)).toBe(30_000)
+  })
+
+  it('attempt 0 returns 500 ms (half the base, documents current behaviour)', () => {
+    // Math.pow(2, 0 - 1) = 0.5 → 1000 * 0.5 = 500
+    expect(getRetryDelay(0)).toBe(500)
   })
 })
