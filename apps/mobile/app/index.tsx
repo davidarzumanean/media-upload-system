@@ -26,14 +26,14 @@ export default function UploadScreen() {
     })
     if (result.canceled) return
 
-    addFiles(
-      result.assets.map((asset) => ({
-        uri: asset.uri,
-        name: asset.fileName ?? `media-${Date.now()}`,
-        size: asset.fileSize ?? 0,
-        mimeType: asset.mimeType ?? 'application/octet-stream',
-      })),
-    )
+    const files = result.assets.flatMap((asset) => {
+      if (!asset.fileSize) {
+        addToast(`${asset.fileName ?? 'File'} has unknown size and was skipped`)
+        return []
+      }
+      return [{ uri: asset.uri, name: asset.fileName ?? `media-${Date.now()}`, size: asset.fileSize, mimeType: asset.mimeType ?? 'application/octet-stream' }]
+    })
+    if (files.length > 0) addFiles(files)
   }
 
   async function takePhoto() {
@@ -50,6 +50,10 @@ export default function UploadScreen() {
     if (result.canceled) return
 
     const asset = result.assets[0]
+    if (!asset.fileSize) {
+      addToast('Could not determine file size — photo was skipped')
+      return
+    }
     const mimeType = asset.mimeType ?? 'image/jpeg'
     const ext = mimeType.startsWith('video/') ? mimeType.split('/')[1] : 'jpg'
     addFiles([
@@ -58,7 +62,7 @@ export default function UploadScreen() {
         name:
           asset.fileName ??
           `${mimeType.startsWith('video/') ? 'video' : 'photo'}-${Date.now()}.${ext}`,
-        size: asset.fileSize ?? 0,
+        size: asset.fileSize,
         mimeType,
       },
     ])
@@ -72,14 +76,14 @@ export default function UploadScreen() {
     })
     if (result.canceled) return
 
-    addFiles(
-      result.assets.map((asset) => ({
-        uri: asset.uri,
-        name: asset.name,
-        size: asset.size ?? 0,
-        mimeType: asset.mimeType ?? 'application/octet-stream',
-      })),
-    )
+    const files = result.assets.flatMap((asset) => {
+      if (!asset.size) {
+        addToast(`${asset.name} has unknown size and was skipped`)
+        return []
+      }
+      return [{ uri: asset.uri, name: asset.name, size: asset.size, mimeType: asset.mimeType ?? 'application/octet-stream' }]
+    })
+    if (files.length > 0) addFiles(files)
   }
 
   // ── Render ──────────────────────────────────────────────────────────────

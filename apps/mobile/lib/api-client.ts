@@ -50,9 +50,11 @@ export function createApiClient(): ApiClient {
       let base64: string
       if (data instanceof ArrayBuffer) {
         const bytes = new Uint8Array(data)
+        // Process in 8 KB slices — apply() on the full array can overflow the call stack for large chunks
+        const SLICE = 8192
         let binary = ''
-        for (let i = 0; i < bytes.length; i++) {
-          binary += String.fromCharCode(bytes[i])
+        for (let i = 0; i < bytes.length; i += SLICE) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + SLICE) as unknown as number[])
         }
         base64 = btoa(binary)
       } else {

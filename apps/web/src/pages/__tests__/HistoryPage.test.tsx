@@ -14,9 +14,7 @@ vi.mock('../../context/UploadManagerContext', () => ({
     clearHistory: mockClearHistory,
     snapshot: { sessions: {} },
     speeds: {},
-    validationErrors: [],
     addFiles: vi.fn(),
-    clearErrors: vi.fn(),
     pause: vi.fn(),
     resume: vi.fn(),
     cancel: vi.fn(),
@@ -24,6 +22,7 @@ vi.mock('../../context/UploadManagerContext', () => ({
     retryAllFailed: vi.fn(),
     dismiss: vi.fn(),
     clearAll: vi.fn(),
+    clearTerminalSessions: vi.fn(),
   }),
 }))
 

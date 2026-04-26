@@ -18,10 +18,7 @@
 
 ## API Contract Warning
 
-- Known mismatch:
-  - clients use `DELETE /uploads/{id}`
-  - API exposes `POST /{uploadId}/cancel`
-- Check cancel behavior before changing mobile actions.
+- Cancel uses `DELETE /uploads/{uploadId}`. If changing it, update the API and both clients together.
 
 ## Validation
 

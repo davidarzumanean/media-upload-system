@@ -85,6 +85,12 @@ export function useUploadManager(): UseUploadManagerReturn {
           const uploadedBytes = Math.round(
             session.progress * session.fileDescriptor.size,
           )
+          // Carry over speed entry when session re-keys from file.id → uploadId
+          const fileId = session.fileDescriptor.id
+          if (!speedTrackRef.current[id] && speedTrackRef.current[fileId]) {
+            speedTrackRef.current[id] = speedTrackRef.current[fileId]
+            delete speedTrackRef.current[fileId]
+          }
           const prev = speedTrackRef.current[id]
           if (prev) {
             const dt = (now - prev.ts) / 1000 // seconds

@@ -56,7 +56,7 @@ export function useUploadManager(): UseUploadManagerReturn {
       .then((raw) => {
         if (raw) setHistory(JSON.parse(raw) as HistoryEntry[])
       })
-      .catch(() => {})
+      .catch(() => addToast('Failed to load upload history'))
   }, [])
 
   const manager = useMemo(
@@ -82,6 +82,12 @@ export function useUploadManager(): UseUploadManagerReturn {
           const uploadedBytes = Math.round(
             session.progress * session.fileDescriptor.size,
           )
+          // Carry over speed entry when session re-keys from file.id → uploadId
+          const fileId = session.fileDescriptor.id
+          if (!speedTrackRef.current[id] && speedTrackRef.current[fileId]) {
+            speedTrackRef.current[id] = speedTrackRef.current[fileId]
+            delete speedTrackRef.current[fileId]
+          }
           const prev = speedTrackRef.current[id]
           if (prev) {
             const dt = (now - prev.ts) / 1000
@@ -144,9 +150,8 @@ export function useUploadManager(): UseUploadManagerReturn {
 
         if (newEntries.length === 0) return prev
         const updated = [...newEntries, ...prev]
-        // Persist asynchronously — fire and forget
-        AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated)).catch(
-          () => {},
+        AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated)).catch(() =>
+          addToast('Failed to save upload history'),
         )
         return updated
       })
@@ -220,6 +225,9 @@ export function useUploadManager(): UseUploadManagerReturn {
         })
 
         void manager.addFiles(valid).then(() => {
+          // Defer start by one tick so React flushes the optimistic snapshot
+          // before the manager fires its first onChange, avoiding a flash where
+          // the list is empty.
           setTimeout(() => {
             void manager.start()
           }, 0)

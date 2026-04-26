@@ -24,11 +24,7 @@
 
 ## API Contract Warning
 
-- Known mismatch:
-  - clients use `DELETE /uploads/{id}`
-  - API exposes `POST /{uploadId}/cancel`
-- Do not ignore this when touching cancel flows.
-- If changing cancel behavior, update clients and API together or preserve compatibility.
+- Cancel uses `DELETE /uploads/{uploadId}` on both clients and the API.
 
 ## Validation
 

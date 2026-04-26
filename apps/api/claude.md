@@ -8,10 +8,7 @@
 ## Contract Rules
 
 - Preserve HTTP compatibility unless intentionally changing clients too.
-- Known mismatch:
-  - clients use `DELETE /uploads/{id}`
-  - API exposes `POST /{uploadId}/cancel`
-- If touching cancel routes, either align both sides or maintain backward compatibility.
+- Cancel route is `DELETE /{uploadId}`. If changing it, update both clients too.
 
 ## Change Rules
 

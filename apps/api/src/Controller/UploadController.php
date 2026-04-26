@@ -139,19 +139,8 @@ class UploadController extends AbstractController
         return new BinaryFileResponse($fullPath);
     }
 
-    #[Route('/{uploadId}/cancel', methods: ['POST'])]
-    public function cancel(string $uploadId): JsonResponse
-    {
-        return $this->doCancel($uploadId);
-    }
-
     #[Route('/{uploadId}', methods: ['DELETE'])]
     public function delete(string $uploadId): JsonResponse
-    {
-        return $this->doCancel($uploadId);
-    }
-
-    private function doCancel(string $uploadId): JsonResponse
     {
         $upload = $this->uploadService->getUpload($uploadId);
         if (!$upload) {
