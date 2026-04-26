@@ -285,4 +285,35 @@ class UploadServiceTest extends TestCase
         $this->assertFileDoesNotExist($finalPath);
         $this->assertNull($this->service->getUpload('uid-10'));
     }
+
+    public function testCleanupExpiredFilesPreservesSharedPath(): void
+    {
+        // First upload — owns the file on disk
+        $this->service->createUpload('uid-11a', 'photo.jpg', 100, 'image/jpeg', 1, null);
+        $this->writeJpegChunks('uid-11a', 1);
+        $first = $this->service->finalizeUpload('uid-11a', $this->service->getUpload('uid-11a'));
+        $sharedPath = $first['path'];
+
+        // Second upload — deduplicated, references the same final_path
+        $this->service->createUpload('uid-11b', 'photo-copy.jpg', 100, 'image/jpeg', 1, null);
+        $this->writeJpegChunks('uid-11b', 1);
+        $second = $this->service->finalizeUpload('uid-11b', $this->service->getUpload('uid-11b'));
+        $this->assertTrue($second['deduplicated']);
+        $this->assertSame($sharedPath, $second['path']);
+
+        // Back-date uid-11a past the retention threshold
+        $ref = new \ReflectionClass($this->service);
+        $connProp = $ref->getProperty('connection');
+        /** @var \Doctrine\DBAL\Connection $conn */
+        $conn = $connProp->getValue($this->service);
+        $conn->update('uploads', ['updated_at' => date('c', strtotime('-31 days'))], ['id' => 'uid-11a']);
+
+        $deleted = $this->service->cleanupExpiredFiles(30);
+
+        $this->assertSame(1, $deleted);
+        $this->assertNull($this->service->getUpload('uid-11a'));
+        $this->assertNotNull($this->service->getUpload('uid-11b'));
+        // File must survive — uid-11b still references it
+        $this->assertFileExists($this->finalDir . '/' . $sharedPath);
+    }
 }
