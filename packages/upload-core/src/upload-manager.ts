@@ -173,9 +173,37 @@ export class UploadManager {
     const session = this.sessions.get(uploadId)
     if (!session || session.status !== 'failed') return
 
-    session.status = 'uploading'
     session.error = undefined
     session.retries = {}
+
+    // Initiation never completed — re-run the full initiate → upload flow.
+    if (!session.uploadId || session.totalChunks === 0) {
+      session.status = 'validating'
+      this.emit()
+      this.apiClient
+        .initiate(session.fileDescriptor)
+        .then(({ uploadId: newId, totalChunks }) => {
+          this.sessions.delete(session.fileDescriptor.id)
+          session.uploadId = newId
+          session.totalChunks =
+            totalChunks > 0
+              ? totalChunks
+              : calculateTotalChunks(session.fileDescriptor.size)
+          session.status = 'uploading'
+          this.sessions.set(newId, session)
+          this.enqueueChunksForSession(session)
+          this.emit()
+          this.dispatch()
+        })
+        .catch((err) => {
+          session.status = 'failed'
+          session.error = err instanceof Error ? err.message : String(err)
+          this.emit()
+        })
+      return
+    }
+
+    session.status = 'uploading'
 
     // All chunks already uploaded but finalize failed — go straight to
     // finalize instead of re-uploading chunks that are already on the server.

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createApiClient, BASE_URL } from '../api-client'
 
 function mockFetch(response: {
@@ -53,7 +53,12 @@ describe('api-client (web)', () => {
       mockFetch({ ok: false, status: 422, statusText: 'Unprocessable Entity' })
 
       await expect(
-        client.initiate({ id: 'f', name: 'f.jpg', size: 1, mimeType: 'image/jpeg' }),
+        client.initiate({
+          id: 'f',
+          name: 'f.jpg',
+          size: 1,
+          mimeType: 'image/jpeg',
+        }),
       ).rejects.toThrow('422')
     })
   })
@@ -114,7 +119,11 @@ describe('api-client (web)', () => {
     })
 
     it('extracts error message from response body on failure', async () => {
-      mockFetch({ ok: false, status: 409, body: { error: 'Already finalized' } })
+      mockFetch({
+        ok: false,
+        status: 409,
+        body: { error: 'Already finalized' },
+      })
       await expect(client.finalize('uid')).rejects.toThrow('Already finalized')
     })
 

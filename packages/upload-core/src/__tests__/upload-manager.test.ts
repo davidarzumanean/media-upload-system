@@ -571,6 +571,115 @@ describe('UploadManager', () => {
     )
   })
 
+  it('should re-initiate when retrying a session that failed during initiation', async () => {
+    let initiateAttempts = 0
+
+    const retryApi = makeApiClient({
+      initiate: vi.fn().mockImplementation((file: FileDescriptor) => {
+        initiateAttempts++
+        if (initiateAttempts === 1) return Promise.reject(new Error('api down'))
+        return Promise.resolve({ uploadId: `uid-${file.id}`, totalChunks: 3 })
+      }),
+    })
+
+    const retryManager = new UploadManager({
+      apiClient: retryApi,
+      chunkReader: reader,
+      maxConcurrent: 3,
+      maxRetries: 3,
+      retryDelay: () => 0,
+    })
+    const snaps: UploadManagerSnapshot[] = []
+    retryManager.setOnChange((s) => snaps.push(s))
+
+    const file = makeFile('a')
+    await retryManager.addFiles([file])
+    await retryManager.start()
+    await flushPromises()
+
+    // Session keyed by file.id, status failed, uploadId empty
+    expect(retryManager.getSnapshot().sessions['a'].status).toBe('failed')
+
+    retryManager.retry('a')
+    await flushPromises()
+
+    // After re-initiation, keyed by real uploadId
+    const snap = retryManager.getSnapshot()
+    expect(snap.sessions['uid-a'].status).toBe('completed')
+    expect(retryApi.initiate).toHaveBeenCalledTimes(2)
+    expect(retryApi.uploadChunk).toHaveBeenCalledTimes(3)
+    expect(retryApi.finalize).toHaveBeenCalledWith('uid-a')
+  })
+
+  it('should handle re-initiation failure gracefully', async () => {
+    const failApi = makeApiClient({
+      initiate: vi.fn().mockRejectedValue(new Error('api down')),
+    })
+
+    const failManager = new UploadManager({
+      apiClient: failApi,
+      chunkReader: reader,
+      maxConcurrent: 3,
+      maxRetries: 3,
+      retryDelay: () => 0,
+    })
+
+    const file = makeFile('a')
+    await failManager.addFiles([file])
+    await failManager.start()
+    await flushPromises()
+
+    expect(failManager.getSnapshot().sessions['a'].status).toBe('failed')
+
+    failManager.retry('a')
+    await flushPromises()
+
+    const snap = failManager.getSnapshot()
+    expect(snap.sessions['a'].status).toBe('failed')
+    expect(snap.sessions['a'].error).toBe('api down')
+    expect(failApi.uploadChunk).not.toHaveBeenCalled()
+  })
+
+  it('should successfully upload after re-initiation succeeds', async () => {
+    let initiateAttempts = 0
+
+    const retryApi = makeApiClient({
+      initiate: vi.fn().mockImplementation((file: FileDescriptor) => {
+        initiateAttempts++
+        if (initiateAttempts <= 2) return Promise.reject(new Error('timeout'))
+        return Promise.resolve({ uploadId: `uid-${file.id}`, totalChunks: 3 })
+      }),
+    })
+
+    const retryManager = new UploadManager({
+      apiClient: retryApi,
+      chunkReader: reader,
+      maxConcurrent: 3,
+      maxRetries: 3,
+      retryDelay: () => 0,
+    })
+
+    const file = makeFile('a')
+    await retryManager.addFiles([file])
+    await retryManager.start()
+    await flushPromises()
+
+    expect(retryManager.getSnapshot().sessions['a'].status).toBe('failed')
+
+    // First retry also fails
+    retryManager.retry('a')
+    await flushPromises()
+    expect(retryManager.getSnapshot().sessions['a'].status).toBe('failed')
+
+    // Second retry succeeds
+    retryManager.retry('a')
+    await flushPromises()
+
+    const snap = retryManager.getSnapshot()
+    expect(snap.sessions['uid-a'].status).toBe('completed')
+    expect(retryApi.uploadChunk).toHaveBeenCalledTimes(3)
+  })
+
   it('should finalize on resume if all chunks were uploaded while paused', async () => {
     // Wait until all 3 chunks are inside uploadChunk, then pause and resolve them all
     const resolvers: Array<() => void> = []
