@@ -50,6 +50,15 @@ export function validateFiles(
       continue
     }
 
+    if (file.size <= 0) {
+      errors.push({
+        fileId: file.id,
+        fileName: file.name,
+        reason: `${file.name} has no size — the file may be empty or unreadable`,
+      })
+      continue
+    }
+
     if (file.size > maxSizeBytes) {
       errors.push({
         fileId: file.id,

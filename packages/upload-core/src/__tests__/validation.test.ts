@@ -91,6 +91,21 @@ describe('validateFiles', () => {
     expect(errors).toHaveLength(2)
   })
 
+  it('rejects files with size <= 0', () => {
+    const files = [
+      makeFile({ id: '1', size: 0, name: 'empty.jpg' }),
+      makeFile({ id: '2', size: -1, name: 'negative.jpg' }),
+      makeFile({ id: '3', size: 1024 }),
+    ]
+    const { valid, errors } = validateFiles(files)
+    expect(valid).toHaveLength(1)
+    expect(valid[0].id).toBe('3')
+    expect(errors).toHaveLength(2)
+    expect(errors[0].fileId).toBe('1')
+    expect(errors[1].fileId).toBe('2')
+    expect(errors[0].reason).toMatch(/no size/)
+  })
+
   it('returns empty arrays for an empty input', () => {
     const { valid, errors } = validateFiles([])
     expect(valid).toHaveLength(0)

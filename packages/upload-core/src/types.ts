@@ -29,7 +29,6 @@ export interface UploadSession {
 export interface ChunkTask {
   uploadId: string
   chunkIndex: number
-  data: Blob | ArrayBuffer
 }
 
 export type UploadManagerSnapshot = {
@@ -53,8 +52,7 @@ export interface ApiClient {
     signal?: AbortSignal,
   ): Promise<void>
   finalize(uploadId: string): Promise<void>
-  getStatus(uploadId: string): Promise<{ status: UploadStatus }>
-  cancel?(uploadId: string): Promise<void>
+  cancel(uploadId: string): Promise<void>
 }
 
 export interface ValidationError {

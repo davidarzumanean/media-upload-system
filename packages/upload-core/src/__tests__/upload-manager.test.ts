@@ -33,7 +33,6 @@ function makeApiClient(overrides: Partial<ApiClient> = {}): ApiClient {
         ) => Promise.resolve(undefined),
       ),
     finalize: vi.fn().mockResolvedValue(undefined),
-    getStatus: vi.fn().mockResolvedValue({ status: 'uploading' }),
     cancel: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
@@ -48,8 +47,10 @@ function makeChunkReader(): ChunkReader {
 }
 
 async function flushPromises(): Promise<void> {
-  // Drain micro-task queue several times to settle all promise chains
-  for (let i = 0; i < 20; i++) {
+  // Drain micro- and macro-task queues. 50 ticks covers deeply-nested
+  // promise chains; real-time delays in mocks (≤50ms) settle naturally
+  // within that window on any reasonable machine.
+  for (let i = 0; i < 50; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0))
   }
 }

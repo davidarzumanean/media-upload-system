@@ -6,6 +6,12 @@ import type {
   UploadManagerSnapshot,
   UploadSession,
 } from './types.js'
+
+// Internal session tracks uploadedChunks as a Set for O(1) lookups.
+// getSnapshot() converts back to number[] for the public UploadSession type.
+type InternalSession = Omit<UploadSession, 'uploadedChunks'> & {
+  uploadedChunks: Set<number>
+}
 import { CHUNK_SIZE, calculateTotalChunks, getRetryDelay } from './chunking.js'
 
 export interface UploadManagerOptions {
@@ -30,7 +36,7 @@ export class UploadManager {
   private readonly maxRetries: number
   private readonly retryDelay: (attempt: number) => number
 
-  private sessions: Map<string, UploadSession> = new Map()
+  private sessions: Map<string, InternalSession> = new Map()
   private queue: ChunkTask[] = []
   private inFlight: InFlightChunk[] = []
   private onChange?: (snapshot: UploadManagerSnapshot) => void
@@ -49,11 +55,11 @@ export class UploadManager {
 
   async addFiles(files: FileDescriptor[]): Promise<void> {
     for (const file of files) {
-      const session: UploadSession = {
+      const session: InternalSession = {
         uploadId: '',
         fileDescriptor: file,
         totalChunks: 0,
-        uploadedChunks: [],
+        uploadedChunks: new Set(),
         status: 'queued',
         progress: 0,
         retries: {},
@@ -138,10 +144,10 @@ export class UploadManager {
 
     // If all chunks uploaded while paused, go straight to finalize
     if (
-      session.uploadedChunks.length === session.totalChunks &&
+      session.uploadedChunks.size === session.totalChunks &&
       session.totalChunks > 0
     ) {
-      this.finalizeSession(session)
+      void this.finalizeSession(session)
       this.emit()
       return
     }
@@ -175,10 +181,10 @@ export class UploadManager {
     // finalize instead of re-uploading chunks that are already on the server.
     if (
       session.totalChunks > 0 &&
-      session.uploadedChunks.length === session.totalChunks
+      session.uploadedChunks.size === session.totalChunks
     ) {
       this.emit()
-      this.finalizeSession(session)
+      void this.finalizeSession(session)
       return
     }
 
@@ -203,40 +209,36 @@ export class UploadManager {
 
     this.emit()
 
-    if (this.apiClient.cancel) {
-      try {
-        await this.apiClient.cancel(uploadId)
-      } catch {
-        // Best-effort server cancel — ignore errors
-      }
+    try {
+      await this.apiClient.cancel(uploadId)
+    } catch {
+      // Best-effort server cancel — ignore errors
     }
   }
 
   getSnapshot(): UploadManagerSnapshot {
     const sessions: Record<string, UploadSession> = {}
     for (const [id, session] of this.sessions) {
-      sessions[id] = { ...session, uploadedChunks: [...session.uploadedChunks] }
+      sessions[id] = {
+        ...session,
+        uploadedChunks: [...session.uploadedChunks],
+      } as UploadSession
     }
     return { sessions }
   }
 
   // ── Private ──────────────────────────────────────────────────────────────
 
-  private enqueueChunksForSession(session: UploadSession): void {
-    const uploadedSet = new Set(session.uploadedChunks)
+  private enqueueChunksForSession(session: InternalSession): void {
+    const queuedSet = new Set(
+      this.queue
+        .filter((t) => t.uploadId === session.uploadId)
+        .map((t) => t.chunkIndex),
+    )
     for (let i = 0; i < session.totalChunks; i++) {
-      if (!uploadedSet.has(i)) {
-        // Avoid re-queuing chunks already in queue
-        const alreadyQueued = this.queue.some(
-          (t) => t.uploadId === session.uploadId && t.chunkIndex === i,
-        )
-        if (!alreadyQueued) {
-          this.queue.push({
-            uploadId: session.uploadId,
-            chunkIndex: i,
-            data: new ArrayBuffer(0),
-          })
-        }
+      if (!session.uploadedChunks.has(i) && !queuedSet.has(i)) {
+        this.queue.push({ uploadId: session.uploadId, chunkIndex: i })
+        queuedSet.add(i)
       }
     }
   }
@@ -263,7 +265,7 @@ export class UploadManager {
 
   private async executeChunk(
     task: ChunkTask,
-    session: UploadSession,
+    session: InternalSession,
     abortController: AbortController,
   ): Promise<void> {
     try {
@@ -297,12 +299,10 @@ export class UploadManager {
     }
   }
 
-  private onChunkSuccess(session: UploadSession, chunkIndex: number): void {
+  private onChunkSuccess(session: InternalSession, chunkIndex: number): void {
     // Always record the chunk — even if paused, don't waste a successful upload
-    if (!session.uploadedChunks.includes(chunkIndex)) {
-      session.uploadedChunks.push(chunkIndex)
-    }
-    session.progress = session.uploadedChunks.length / session.totalChunks
+    session.uploadedChunks.add(chunkIndex)
+    session.progress = session.uploadedChunks.size / session.totalChunks
 
     // If canceled, silently ignore
     if (session.status === 'canceled') return
@@ -315,13 +315,13 @@ export class UploadManager {
 
     this.emit()
 
-    if (session.uploadedChunks.length === session.totalChunks) {
-      this.finalizeSession(session)
+    if (session.uploadedChunks.size === session.totalChunks) {
+      void this.finalizeSession(session)
     }
   }
 
   private onChunkError(
-    session: UploadSession,
+    session: InternalSession,
     chunkIndex: number,
     err: unknown,
   ): void {
@@ -344,7 +344,6 @@ export class UploadManager {
       this.queue.unshift({
         uploadId: session.uploadId,
         chunkIndex,
-        data: new ArrayBuffer(0),
       })
       this.dispatch()
     }, delay)
@@ -352,19 +351,17 @@ export class UploadManager {
     this.emit()
   }
 
-  private finalizeSession(session: UploadSession): void {
-    this.apiClient
-      .finalize(session.uploadId)
-      .then(() => {
-        session.status = 'completed'
-        session.progress = 1
-        this.emit()
-      })
-      .catch((err) => {
-        session.status = 'failed'
-        session.error = err instanceof Error ? err.message : String(err)
-        this.emit()
-      })
+  private async finalizeSession(session: InternalSession): Promise<void> {
+    try {
+      await this.apiClient.finalize(session.uploadId)
+      session.status = 'completed'
+      session.progress = 1
+      this.emit()
+    } catch (err) {
+      session.status = 'failed'
+      session.error = err instanceof Error ? err.message : String(err)
+      this.emit()
+    }
   }
 
   private emit(): void {
