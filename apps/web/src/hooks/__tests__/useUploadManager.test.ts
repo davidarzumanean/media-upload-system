@@ -228,6 +228,86 @@ describe('useUploadManager', () => {
     expect(() => unmount()).not.toThrow()
   })
 
+  // ── clearAll ──────────────────────────────────────────────────────────────
+
+  it('clearAll hides all sessions including active ones', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+
+    instance.getSnapshot.mockReturnValue({
+      sessions: {
+        'upl-1': { status: 'uploading', fileDescriptor: { id: 'upl-1' } },
+        'cmp-1': { status: 'completed', fileDescriptor: { id: 'cmp-1' } },
+        'psd-1': { status: 'paused',    fileDescriptor: { id: 'psd-1' } },
+      },
+    })
+
+    act(() => {
+      result.current.clearAll()
+    })
+
+    // All three must be absent from the visible snapshot
+    expect(result.current.snapshot.sessions['upl-1']).toBeUndefined()
+    expect(result.current.snapshot.sessions['cmp-1']).toBeUndefined()
+    expect(result.current.snapshot.sessions['psd-1']).toBeUndefined()
+  })
+
+  it('clearAll removes terminal sessions from manager but not active ones', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+
+    instance.getSnapshot.mockReturnValue({
+      sessions: {
+        'cmp-1': { status: 'completed', fileDescriptor: { id: 'cmp-1' } },
+        'fld-1': { status: 'failed',    fileDescriptor: { id: 'fld-1' } },
+        'cnc-1': { status: 'canceled',  fileDescriptor: { id: 'cnc-1' } },
+        'upl-1': { status: 'uploading', fileDescriptor: { id: 'upl-1' } },
+        'psd-1': { status: 'paused',    fileDescriptor: { id: 'psd-1' } },
+      },
+    })
+
+    act(() => {
+      result.current.clearAll()
+    })
+
+    expect(instance.remove).toHaveBeenCalledTimes(3)
+    expect(instance.remove).toHaveBeenCalledWith('cmp-1')
+    expect(instance.remove).toHaveBeenCalledWith('fld-1')
+    expect(instance.remove).toHaveBeenCalledWith('cnc-1')
+    expect(instance.remove).not.toHaveBeenCalledWith('upl-1')
+    expect(instance.remove).not.toHaveBeenCalledWith('psd-1')
+  })
+
+  it('clearAll on empty snapshot does not throw', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    instance.getSnapshot.mockReturnValue({ sessions: {} })
+
+    expect(() => {
+      act(() => { result.current.clearAll() })
+    }).not.toThrow()
+    expect(instance.remove).not.toHaveBeenCalled()
+  })
+
+  it('clearAll deduplicates hidden ids when called twice', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+
+    instance.getSnapshot.mockReturnValue({
+      sessions: {
+        'cmp-1': { status: 'completed', fileDescriptor: { id: 'cmp-1' } },
+      },
+    })
+
+    act(() => { result.current.clearAll() })
+    // After first call, session is removed from manager — second call sees empty snapshot
+    instance.getSnapshot.mockReturnValue({ sessions: {} })
+    act(() => { result.current.clearAll() })
+
+    // remove called only once (only on first call when session existed)
+    expect(instance.remove).toHaveBeenCalledTimes(1)
+  })
+
   // ── retryAllFailed ────────────────────────────────────────────────────────
 
   it('retryAllFailed calls manager.retry for every failed session only', () => {
