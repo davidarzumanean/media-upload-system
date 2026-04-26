@@ -44,7 +44,7 @@ The API runs at `http://localhost:8000`.
 
 ```bash
 cd apps/web
-pnpm dev
+npm run dev
 ```
 
 Opens at `http://localhost:5173`.
