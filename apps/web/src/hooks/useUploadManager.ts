@@ -31,7 +31,7 @@ export interface UseUploadManagerReturn {
   retry: (uploadId: string) => void
   retryAllFailed: () => void
   dismiss: (uploadId: string) => void
-  clearAll: () => void
+  clearAllUploads: () => void
   clearTerminalSessions: () => void
   history: HistoryEntry[]
   clearHistory: () => void
@@ -145,8 +145,7 @@ export function useUploadManager(): UseUploadManagerReturn {
           }
           // Do NOT revoke/unregister on 'failed' — retry needs the blob URL and chunk reader entry
           if (
-            (session.status === 'completed' ||
-              session.status === 'canceled') &&
+            (session.status === 'completed' || session.status === 'canceled') &&
             session.fileDescriptor.previewUri
           ) {
             const url = previewUrls.current.get(session.fileDescriptor.id)
@@ -252,7 +251,7 @@ export function useUploadManager(): UseUploadManagerReturn {
     [manager],
   )
 
-  const clearAll = useCallback(() => {
+  const clearAllUploads = useCallback(() => {
     const snap = manager.getSnapshot()
     const sessionIds = Object.keys(snap.sessions)
 
@@ -301,7 +300,7 @@ export function useUploadManager(): UseUploadManagerReturn {
     retry,
     retryAllFailed,
     dismiss,
-    clearAll,
+    clearAllUploads,
     clearTerminalSessions,
     history,
     clearHistory,

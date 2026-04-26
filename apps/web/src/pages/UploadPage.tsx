@@ -16,7 +16,7 @@ export function UploadPage() {
     retry,
     retryAllFailed,
     dismiss,
-    clearAll,
+    clearAllUploads,
     clearTerminalSessions,
   } = useUploadManagerContext()
 
@@ -51,7 +51,7 @@ export function UploadPage() {
           onRetry={retry}
           onRetryAllFailed={retryAllFailed}
           onDismiss={dismiss}
-          onClearAll={clearAll}
+          onClearAll={clearAllUploads}
         />
       )}
     </main>

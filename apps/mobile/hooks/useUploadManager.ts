@@ -36,6 +36,7 @@ export interface UseUploadManagerReturn {
   dismiss: (uploadId: string) => void
   history: HistoryEntry[]
   clearHistory: () => void
+  clearAllUploads: () => void
 }
 
 export function useUploadManager(): UseUploadManagerReturn {
@@ -140,10 +141,7 @@ export function useUploadManager(): UseUploadManagerReturn {
           }
           // Unregister the file from chunk-reader once we no longer need it
           // Do NOT unregister on 'failed' — retry needs the registered URI
-          if (
-            session.status === 'completed' ||
-            session.status === 'canceled'
-          ) {
+          if (session.status === 'completed' || session.status === 'canceled') {
             unregisterFile(session.fileDescriptor.id)
           }
         }
@@ -255,6 +253,24 @@ export function useUploadManager(): UseUploadManagerReturn {
     AsyncStorage.removeItem(HISTORY_KEY).catch(() => {})
   }, [])
 
+  const clearAllUploads = useCallback(() => {
+    const snap = manager.getSnapshot()
+    for (const [id, s] of Object.entries(snap.sessions)) {
+      if (
+        s.status === 'completed' ||
+        s.status === 'canceled' ||
+        s.status === 'failed'
+      ) {
+        manager.remove(id)
+      }
+    }
+    setHiddenUploadIds((prev) => {
+      const next = new Set(prev)
+      for (const id of Object.keys(snap.sessions)) next.add(id)
+      return [...next]
+    })
+  }, [manager])
+
   return {
     snapshot,
     speeds,
@@ -266,5 +282,6 @@ export function useUploadManager(): UseUploadManagerReturn {
     dismiss,
     history,
     clearHistory,
+    clearAllUploads,
   }
 }

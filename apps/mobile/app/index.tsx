@@ -1,8 +1,14 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native'
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
-import type { UploadSession } from '@media-upload/core'
+import { colors, UploadSession } from '@media-upload/core'
 import { useUploadManagerContext } from '@/lib/upload-manager-context'
 import { useToast } from '@/context/ToastContext'
 import { FileCard } from '@/components/FileCard'
@@ -10,8 +16,17 @@ import { UploadEmptyState } from '@/components/UploadEmptyState'
 import { PickerButton } from '@/components/PickerButton'
 
 export default function UploadScreen() {
-  const { snapshot, speeds, addFiles, pause, resume, cancel, retry, dismiss } =
-    useUploadManagerContext()
+  const {
+    snapshot,
+    speeds,
+    addFiles,
+    pause,
+    resume,
+    cancel,
+    retry,
+    dismiss,
+    clearAllUploads,
+  } = useUploadManagerContext()
   const { addToast } = useToast()
 
   const sessions = Object.values(snapshot.sessions) as UploadSession[]
@@ -114,6 +129,13 @@ export default function UploadScreen() {
               <Text style={styles.listHeaderText}>
                 {sessions.length} {sessions.length === 1 ? 'file' : 'files'}
               </Text>
+
+              <TouchableOpacity
+                onPress={clearAllUploads}
+                accessibilityLabel="Clear all uploads"
+              >
+                <Text style={styles.clearBtn}>Clear all</Text>
+              </TouchableOpacity>
             </View>
           ) : null
         }
@@ -171,6 +193,9 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   listHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
   listHeaderText: {
@@ -179,6 +204,11 @@ const styles = StyleSheet.create({
     color: '#64748B', // slate-500 — structural
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  clearBtn: {
+    fontSize: 14,
+    color: colors.gray500,
+    fontWeight: '500',
   },
   listFooter: {
     height: 20,
