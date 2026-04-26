@@ -8,7 +8,7 @@ interface EmptyStateProps {
   onDocument: () => void
 }
 
-export function EmptyState({
+export function UploadEmptyState({
   onGallery,
   onCamera,
   onDocument,
@@ -71,12 +71,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1E293B', // slate-800 — structural
+    color: colors.slate800,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B', // slate-500 — structural
+    color: colors.slate500,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 32,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     paddingHorizontal: 24,
     borderWidth: 1.5,
-    borderColor: '#DBEAFE', // blue-100 — structural border
+    borderColor: colors.primaryBorderLight,
   },
   secondaryBtnLabel: {
     fontSize: 15,
@@ -120,6 +120,6 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 12,
-    color: '#94A3B8', // slate-400 — structural
+    color: colors.slate400,
   },
 })

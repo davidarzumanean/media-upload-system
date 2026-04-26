@@ -10,21 +10,21 @@ const STATUS_CONFIG: Record<
   UploadStatus,
   { label: string; bg: string; text: string }
 > = {
-  queued: { label: 'Queued', bg: '#F1F5F9', text: '#64748B' }, // slate-100 / slate-500
-  validating: { label: 'Validating', bg: '#F1F5F9', text: '#64748B' }, // slate-100 / slate-500
+  queued: { label: 'Queued', bg: '#F1F5F9', text: '#64748B' },
+  validating: { label: 'Validating', bg: '#F1F5F9', text: '#64748B' },
   uploading: {
     label: 'Uploading',
     bg: colors.primaryLight,
     text: colors.primary,
-  }, // #EFF6FF / #3B82F6
-  paused: { label: 'Paused', bg: colors.warningLight, text: colors.warning }, // #FFFBEB / #F59E0B
+  },
+  paused: { label: 'Paused', bg: colors.warningLight, text: colors.warning },
   completed: {
     label: 'Completed',
     bg: colors.successLight,
     text: colors.success,
-  }, // #ECFDF5 / #10B981
-  failed: { label: 'Failed', bg: colors.errorLight, text: colors.error }, // #FEF2F2 / #EF4444
-  canceled: { label: 'Canceled', bg: '#F8FAFC', text: '#94A3B8' }, // slate-50 / slate-400
+  },
+  failed: { label: 'Failed', bg: colors.errorLight, text: colors.error },
+  canceled: { label: 'Canceled', bg: '#F8FAFC', text: '#94A3B8' },
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {

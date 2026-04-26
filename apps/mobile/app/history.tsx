@@ -9,9 +9,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useState } from 'react'
-import { colors } from '@media-upload/core'
+import { colors, formatDate, formatFileSize } from '@media-upload/core'
 import { useUploadManagerContext } from '@/lib/upload-manager-context'
-import { formatFileSize } from '@media-upload/core'
 import type { HistoryEntry } from '@/hooks/useUploadManager'
 import { BASE_URL } from '@/lib/api-client'
 
@@ -50,17 +49,6 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
   const [imgError, setImgError] = useState(false)
   const showThumb = entry.mimeType.startsWith('image/') && !imgError
 
-  const date = new Date(entry.completedAt)
-  const dateLabel = date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-  const timeLabel = date.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-
   return (
     <View style={styles.item}>
       {showThumb ? (
@@ -90,9 +78,7 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
         </Text>
         <View style={styles.itemDateRow}>
           <Ionicons name="checkmark-circle" size={12} color={colors.success} />
-          <Text style={styles.itemDate}>
-            {dateLabel} at {timeLabel}
-          </Text>
+          <Text style={styles.itemDate}>{formatDate(entry.completedAt)}</Text>
         </View>
       </View>
     </View>

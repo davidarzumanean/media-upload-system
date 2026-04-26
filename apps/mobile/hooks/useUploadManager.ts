@@ -57,7 +57,7 @@ export function useUploadManager(): UseUploadManagerReturn {
         if (raw) setHistory(JSON.parse(raw) as HistoryEntry[])
       })
       .catch(() => addToast('Failed to load upload history'))
-  }, [])
+  }, [addToast])
 
   const manager = useMemo(
     () =>
@@ -139,10 +139,10 @@ export function useUploadManager(): UseUploadManagerReturn {
             })
           }
           // Unregister the file from chunk-reader once we no longer need it
+          // Do NOT unregister on 'failed' — retry needs the registered URI
           if (
             session.status === 'completed' ||
-            session.status === 'canceled' ||
-            session.status === 'failed'
+            session.status === 'canceled'
           ) {
             unregisterFile(session.fileDescriptor.id)
           }
@@ -156,7 +156,7 @@ export function useUploadManager(): UseUploadManagerReturn {
         return updated
       })
     })
-  }, [manager])
+  }, [manager, addToast])
 
   // Prune hidden IDs that have been removed by the manager
   useEffect(() => {
@@ -234,7 +234,7 @@ export function useUploadManager(): UseUploadManagerReturn {
         })
       }
     },
-    [manager],
+    [manager, addToast],
   )
 
   const pause = useCallback((id: string) => manager.pause(id), [manager])

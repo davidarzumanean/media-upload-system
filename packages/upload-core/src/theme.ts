@@ -11,6 +11,7 @@ export const colors = {
   // ── Brand / primary ────────────────────────────────────────────────────────
   primary: '#3b82f6', // blue-600  — buttons, links, progress bars
   primaryLight: '#EFF6FF', // blue-50   — tinted backgrounds
+  primaryBorderLight: '#DBEAFE',
   primaryDark: '#2563eb', // blue-800  — button hover / active
 
   // ── Semantic status ────────────────────────────────────────────────────────
@@ -24,14 +25,14 @@ export const colors = {
   errorLight: '#FEF2F2', // red-50     — error badge background
 
   // ── Neutral grays ──────────────────────────────────────────────────────────
-  gray50: '#F9FAFB',
-  gray100: '#F3F4F6',
-  gray200: '#E5E7EB',
-  gray300: '#D1D5DB',
-  gray400: '#9CA3AF',
   gray500: '#6B7280',
-  gray700: '#374151',
   gray900: '#111827',
+
+  slate50: '#F8FAFC',
+  slate100: '#F1F5F9',
+  slate400: '#94A3B8',
+  slate500: '#64748B',
+  slate800: '#1E293B',
 
   white: '#FFFFFF',
 } as const

@@ -332,30 +332,79 @@ describe('useUploadManager', () => {
     expect(unregisterFile).toHaveBeenCalledWith('fd-1')
   })
 
-  it('calls unregisterFile on failed and canceled statuses too', () => {
+  it('calls unregisterFile on canceled status', () => {
     const { result } = renderHook(() => useUploadManager())
     const onChange = getOnChange(getMockInstance())
-
-    const makeSession = (id: string, status: string) => ({
-      uploadId: id,
-      fileDescriptor: { id, name: 'a.jpg', size: 100, mimeType: 'image/jpeg' },
-      totalChunks: 1,
-      uploadedChunks: [],
-      status,
-      progress: 0,
-      retries: {},
-    })
 
     act(() => {
       onChange({
         sessions: {
-          'fd-fail': makeSession('fd-fail', 'failed'),
-          'fd-cancel': makeSession('fd-cancel', 'canceled'),
+          'fd-cancel': {
+            uploadId: 'fd-cancel',
+            fileDescriptor: { id: 'fd-cancel', name: 'a.jpg', size: 100, mimeType: 'image/jpeg' },
+            totalChunks: 1, uploadedChunks: [], status: 'canceled', progress: 0, retries: {},
+          },
         },
       })
     })
 
-    expect(unregisterFile).toHaveBeenCalledWith('fd-fail')
+    expect(unregisterFile).toHaveBeenCalledWith('fd-cancel')
+  })
+
+  it('should not unregister file on failed status', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const onChange = getOnChange(getMockInstance())
+
+    act(() => {
+      onChange({
+        sessions: {
+          'fd-fail': {
+            uploadId: 'fd-fail',
+            fileDescriptor: { id: 'fd-fail', name: 'a.jpg', size: 100, mimeType: 'image/jpeg' },
+            totalChunks: 1, uploadedChunks: [], status: 'failed', progress: 0, retries: {},
+          },
+        },
+      })
+    })
+
+    expect(unregisterFile).not.toHaveBeenCalled()
+  })
+
+  it('should unregister file on completed status', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const onChange = getOnChange(getMockInstance())
+
+    act(() => {
+      onChange({
+        sessions: {
+          'fd-done': {
+            uploadId: 'fd-done',
+            fileDescriptor: { id: 'fd-done', name: 'a.jpg', size: 100, mimeType: 'image/jpeg' },
+            totalChunks: 1, uploadedChunks: [0], status: 'completed', progress: 1, retries: {},
+          },
+        },
+      })
+    })
+
+    expect(unregisterFile).toHaveBeenCalledWith('fd-done')
+  })
+
+  it('should unregister file on canceled status', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const onChange = getOnChange(getMockInstance())
+
+    act(() => {
+      onChange({
+        sessions: {
+          'fd-cancel': {
+            uploadId: 'fd-cancel',
+            fileDescriptor: { id: 'fd-cancel', name: 'a.jpg', size: 100, mimeType: 'image/jpeg' },
+            totalChunks: 1, uploadedChunks: [], status: 'canceled', progress: 0, retries: {},
+          },
+        },
+      })
+    })
+
     expect(unregisterFile).toHaveBeenCalledWith('fd-cancel')
   })
 })

@@ -6,7 +6,7 @@ import type { UploadSession } from '@media-upload/core'
 import { useUploadManagerContext } from '@/lib/upload-manager-context'
 import { useToast } from '@/context/ToastContext'
 import { FileCard } from '@/components/FileCard'
-import { EmptyState } from '@/components/EmptyState'
+import { UploadEmptyState } from '@/components/UploadEmptyState'
 import { PickerButton } from '@/components/PickerButton'
 
 export default function UploadScreen() {
@@ -31,7 +31,14 @@ export default function UploadScreen() {
         addToast(`${asset.fileName ?? 'File'} has unknown size and was skipped`)
         return []
       }
-      return [{ uri: asset.uri, name: asset.fileName ?? `media-${Date.now()}`, size: asset.fileSize, mimeType: asset.mimeType ?? 'application/octet-stream' }]
+      return [
+        {
+          uri: asset.uri,
+          name: asset.fileName ?? `media-${Date.now()}`,
+          size: asset.fileSize,
+          mimeType: asset.mimeType ?? 'application/octet-stream',
+        },
+      ]
     })
     if (files.length > 0) addFiles(files)
   }
@@ -81,7 +88,14 @@ export default function UploadScreen() {
         addToast(`${asset.name} has unknown size and was skipped`)
         return []
       }
-      return [{ uri: asset.uri, name: asset.name, size: asset.size, mimeType: asset.mimeType ?? 'application/octet-stream' }]
+      return [
+        {
+          uri: asset.uri,
+          name: asset.name,
+          size: asset.size,
+          mimeType: asset.mimeType ?? 'application/octet-stream',
+        },
+      ]
     })
     if (files.length > 0) addFiles(files)
   }
@@ -104,7 +118,7 @@ export default function UploadScreen() {
           ) : null
         }
         ListEmptyComponent={
-          <EmptyState
+          <UploadEmptyState
             onGallery={pickFromGallery}
             onCamera={takePhoto}
             onDocument={pickDocument}

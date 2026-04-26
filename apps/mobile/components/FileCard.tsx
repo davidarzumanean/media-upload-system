@@ -28,8 +28,7 @@ export function FileCard({
   const id = uploadId || fd.id
   const pct = Math.round(progress * 100)
 
-  const showProgress =
-    status === 'uploading' || status === 'paused' || status === 'completed'
+  const showProgressText = status === 'uploading' || status === 'paused'
   const showProgressBar = status === 'uploading' || status === 'paused'
 
   return (
@@ -80,7 +79,7 @@ export function FileCard({
           <Text style={styles.metaLine}>
             {formatFileSize(fd.size)}
             {fd.mimeType ? `  ·  ${fd.mimeType}` : ''}
-            {showProgress && status !== 'completed' ? `  ·  ${pct}%` : ''}
+            {showProgressText ? `  ·  ${pct}%` : ''}
             {status === 'uploading' && speed
               ? `  ·  ${formatSpeed(speed)}`
               : ''}
@@ -146,16 +145,6 @@ export function FileCard({
 }
 
 type ActionVariant = 'pause' | 'resume' | 'cancel' | 'retry'
-
-const ACTION_CONFIG: Record<
-  ActionVariant,
-  { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }
-> = {
-  pause: { icon: 'pause', color: colors.warning, bg: colors.warningLight },
-  resume: { icon: 'play', color: colors.primary, bg: colors.primaryLight },
-  cancel: { icon: 'close', color: colors.error, bg: colors.errorLight },
-  retry: { icon: 'refresh', color: colors.primary, bg: colors.primaryLight },
-}
 
 function ActionButton({
   label,
