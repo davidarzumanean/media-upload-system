@@ -60,7 +60,7 @@ class UploadService
 
         $chunkDir = $this->tmpDir . '/' . $uploadId;
         if (!is_dir($chunkDir)) {
-            mkdir($chunkDir, 0777, true);
+            mkdir($chunkDir, 0755, true);
         }
     }
 
@@ -77,7 +77,7 @@ class UploadService
     {
         $chunkDir = $this->tmpDir . '/' . $uploadId;
         if (!is_dir($chunkDir)) {
-            mkdir($chunkDir, 0777, true);
+            mkdir($chunkDir, 0755, true);
         }
 
         $chunkFile->move($chunkDir, $chunkIndex . '.part');
@@ -172,7 +172,7 @@ class UploadService
         $date = date('Y/m/d');
         $finalSubDir = $this->finalDir . '/' . $date;
         if (!is_dir($finalSubDir)) {
-            mkdir($finalSubDir, 0777, true);
+            mkdir($finalSubDir, 0755, true);
         }
 
         $sanitizedName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $upload['original_name']);
@@ -232,9 +232,15 @@ class UploadService
         $count = 0;
         foreach ($expired as $row) {
             if ($row['final_path']) {
-                $fullPath = $this->finalDir . '/' . $row['final_path'];
-                if (file_exists($fullPath)) {
-                    unlink($fullPath);
+                $refCount = (int) $this->connection->fetchOne(
+                    'SELECT COUNT(*) FROM uploads WHERE final_path = ? AND id != ?',
+                    [$row['final_path'], $row['id']]
+                );
+                if ($refCount === 0) {
+                    $fullPath = $this->finalDir . '/' . $row['final_path'];
+                    if (file_exists($fullPath)) {
+                        unlink($fullPath);
+                    }
                 }
             }
             $this->connection->delete('uploads', ['id' => $row['id']]);

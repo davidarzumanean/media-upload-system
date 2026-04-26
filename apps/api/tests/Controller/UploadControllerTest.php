@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use App\Service\UploadService;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -13,26 +14,11 @@ class UploadControllerTest extends WebTestCase
         // Boot the kernel once per test; subsequent calls within the test use getClient().
         static::createClient();
 
+        // Instantiate UploadService so its constructor runs ensureSchema().
+        static::getContainer()->get(UploadService::class);
+
         /** @var Connection $conn */
         $conn = static::getContainer()->get(Connection::class);
-
-        // Ensure schema exists (UploadService creates it in its constructor, but
-        // we guard here in case the service hasn't been initialised yet).
-        $conn->executeStatement('
-            CREATE TABLE IF NOT EXISTS uploads (
-                id TEXT PRIMARY KEY,
-                original_name TEXT NOT NULL,
-                mime_type TEXT NOT NULL,
-                file_size INTEGER NOT NULL,
-                total_chunks INTEGER NOT NULL,
-                status TEXT NOT NULL DEFAULT "pending",
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                md5_checksum TEXT,
-                final_path TEXT,
-                client_checksum TEXT
-            )
-        ');
 
         // Wipe data so every test starts clean.
         $conn->executeStatement('DELETE FROM uploads');
@@ -178,6 +164,35 @@ class UploadControllerTest extends WebTestCase
         $this->assertArrayHasKey('error', $data);
     }
 
+    public function testInitiateZeroSize(): void
+    {
+        $client = static::getClient();
+        $client->request('POST', '/api/uploads/initiate', [], [], ['CONTENT_TYPE' => 'application/json'],
+            json_encode(['name' => 'photo.jpg', 'size' => 0, 'mimeType' => 'image/jpeg'])
+        );
+        $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function testInitiateNegativeSize(): void
+    {
+        $client = static::getClient();
+        $client->request('POST', '/api/uploads/initiate', [], [], ['CONTENT_TYPE' => 'application/json'],
+            json_encode(['name' => 'photo.jpg', 'size' => -1, 'mimeType' => 'image/jpeg'])
+        );
+        $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function testInitiateExceedsMaxSize(): void
+    {
+        $client = static::getClient();
+        $client->request('POST', '/api/uploads/initiate', [], [], ['CONTENT_TYPE' => 'application/json'],
+            json_encode(['name' => 'huge.mp4', 'size' => 6 * 1024 * 1024 * 1024, 'mimeType' => 'video/mp4'])
+        );
+        $this->assertResponseStatusCodeSame(400);
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertArrayHasKey('maxBytes', $data);
+    }
+
     // ─── chunk upload ─────────────────────────────────────────────────────────
 
     public function testChunkUpload(): void
@@ -230,6 +245,34 @@ class UploadControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
+    public function testChunkUploadToCompletedUpload(): void
+    {
+        $init     = $this->initiate(['size' => 100, 'name' => 'photo.jpg']);
+        $uploadId = $init['uploadId'];
+
+        $this->uploadAllChunks($uploadId, $init['totalChunks']);
+        static::getClient()->request('POST', "/api/uploads/{$uploadId}/finalize");
+        $this->assertResponseIsSuccessful();
+
+        $file = $this->makeChunkFile();
+        static::getClient()->request('POST', "/api/uploads/{$uploadId}/chunks/0", [], ['chunk' => $file]);
+
+        $this->assertResponseStatusCodeSame(409);
+    }
+
+    public function testChunkUploadToCanceledUpload(): void
+    {
+        $init     = $this->initiate();
+        $uploadId = $init['uploadId'];
+
+        static::getClient()->request('DELETE', "/api/uploads/{$uploadId}");
+
+        $file = $this->makeChunkFile();
+        static::getClient()->request('POST', "/api/uploads/{$uploadId}/chunks/0", [], ['chunk' => $file]);
+
+        $this->assertResponseStatusCodeSame(409);
+    }
+
     // ─── finalize ─────────────────────────────────────────────────────────────
 
     public function testFinalizeSuccess(): void
@@ -246,6 +289,30 @@ class UploadControllerTest extends WebTestCase
 
         $data = json_decode(static::getClient()->getResponse()->getContent(), true);
         $this->assertSame('completed', $data['status']);
+    }
+
+    public function testFinalizeCompletedUpload(): void
+    {
+        $init     = $this->initiate(['size' => 100, 'name' => 'photo.jpg']);
+        $uploadId = $init['uploadId'];
+
+        $this->uploadAllChunks($uploadId, $init['totalChunks']);
+        static::getClient()->request('POST', "/api/uploads/{$uploadId}/finalize");
+        $this->assertResponseIsSuccessful();
+
+        static::getClient()->request('POST', "/api/uploads/{$uploadId}/finalize");
+        $this->assertResponseStatusCodeSame(409);
+    }
+
+    public function testFinalizeCanceledUpload(): void
+    {
+        $init     = $this->initiate();
+        $uploadId = $init['uploadId'];
+
+        static::getClient()->request('DELETE', "/api/uploads/{$uploadId}");
+        static::getClient()->request('POST', "/api/uploads/{$uploadId}/finalize");
+
+        $this->assertResponseStatusCodeSame(409);
     }
 
     // ─── status ───────────────────────────────────────────────────────────────

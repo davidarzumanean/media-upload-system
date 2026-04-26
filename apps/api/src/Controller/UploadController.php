@@ -14,6 +14,9 @@ use Symfony\Component\Uid\Uuid;
 #[Route('/api/uploads')]
 class UploadController extends AbstractController
 {
+    private const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
+    private const ACTIVE_STATUSES = ['pending', 'uploading'];
+
     public function __construct(
         private readonly UploadService $uploadService
     ) {}
@@ -28,12 +31,20 @@ class UploadController extends AbstractController
         $mimeType = $data['mimeType'] ?? null;
         $fileId = $data['fileId'] ?? null;
 
-        if (!$name || !$size || !$mimeType) {
-            $missing = [];
-            if (!$name) $missing[] = 'name';
-            if (!$size) $missing[] = 'size';
-            if (!$mimeType) $missing[] = 'mimeType';
+        $missing = [];
+        if (!$name) $missing[] = 'name';
+        if ($size === null || $size === '') $missing[] = 'size';
+        if (!$mimeType) $missing[] = 'mimeType';
+        if ($missing) {
             return $this->json(['error' => 'Missing required fields', 'missing' => $missing], 400);
+        }
+
+        $size = (int) $size;
+        if ($size <= 0) {
+            return $this->json(['error' => 'size must be a positive integer'], 400);
+        }
+        if ($size > self::MAX_FILE_SIZE) {
+            return $this->json(['error' => 'File too large', 'maxBytes' => self::MAX_FILE_SIZE], 400);
         }
 
         $allowedPrefixes = ['image/', 'video/'];
@@ -69,6 +80,10 @@ class UploadController extends AbstractController
             return $this->json(['error' => 'Upload not found'], 404);
         }
 
+        if (!in_array($upload['status'], self::ACTIVE_STATUSES, true)) {
+            return $this->json(['error' => 'Upload is not accepting chunks', 'status' => $upload['status']], 409);
+        }
+
         $chunkFile = $request->files->get('chunk');
         if (!$chunkFile) {
             return $this->json(['error' => 'No chunk data received'], 400);
@@ -92,6 +107,10 @@ class UploadController extends AbstractController
         $upload = $this->uploadService->getUpload($uploadId);
         if (!$upload) {
             return $this->json(['error' => 'Upload not found'], 404);
+        }
+
+        if (!in_array($upload['status'], self::ACTIVE_STATUSES, true)) {
+            return $this->json(['error' => 'Upload cannot be finalized', 'status' => $upload['status']], 409);
         }
 
         $result = $this->uploadService->finalizeUpload($uploadId, $upload);
