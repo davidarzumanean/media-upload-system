@@ -143,10 +143,10 @@ export function useUploadManager(): UseUploadManagerReturn {
               previewUri,
             })
           }
+          // Do NOT revoke/unregister on 'failed' — retry needs the blob URL and chunk reader entry
           if (
             (session.status === 'completed' ||
-              session.status === 'canceled' ||
-              session.status === 'failed') &&
+              session.status === 'canceled') &&
             session.fileDescriptor.previewUri
           ) {
             const url = previewUrls.current.get(session.fileDescriptor.id)

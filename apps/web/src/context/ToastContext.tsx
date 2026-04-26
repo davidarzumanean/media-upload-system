@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -26,6 +27,13 @@ const AUTO_DISMISS_MS = 5000
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+
+  useEffect(() => {
+    return () => {
+      timers.current.forEach(clearTimeout)
+      timers.current.clear()
+    }
+  }, [])
 
   const removeToast = useCallback((id: string) => {
     const timer = timers.current.get(id)

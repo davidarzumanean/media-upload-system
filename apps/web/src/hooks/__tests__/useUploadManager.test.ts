@@ -47,6 +47,8 @@ vi.mock('../../lib/chunk-reader', () => ({
   chunkReader: vi.fn().mockResolvedValue(new ArrayBuffer(0)),
 }))
 
+import { unregisterFile } from '../../lib/chunk-reader'
+
 function getMockInstance() {
   return vi.mocked(UploadManager).mock.results[0]?.value as {
     setOnChange: ReturnType<typeof vi.fn>
@@ -490,5 +492,83 @@ describe('useUploadManager', () => {
     })
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test-preview-url')
+  })
+
+  it('should revoke blob URL and unregister file on completed status', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+
+    act(() => { result.current.addFiles([makeImageFile('hero.jpg')]) })
+
+    const session = Object.values(result.current.snapshot.sessions)[0]
+    const { id: fileId, previewUri } = session.fileDescriptor
+
+    act(() => {
+      onChange({
+        sessions: {
+          'server-uid': {
+            uploadId: 'server-uid',
+            fileDescriptor: { id: fileId, name: 'hero.jpg', size: 11, mimeType: 'image/jpeg', previewUri },
+            totalChunks: 1, uploadedChunks: [0], status: 'completed', progress: 1, retries: {},
+          },
+        },
+      })
+    })
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(previewUri)
+    expect(vi.mocked(unregisterFile)).toHaveBeenCalledWith(fileId)
+  })
+
+  it('should revoke blob URL and unregister file on canceled status', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+
+    act(() => { result.current.addFiles([makeImageFile('hero.jpg')]) })
+
+    const session = Object.values(result.current.snapshot.sessions)[0]
+    const { id: fileId, previewUri } = session.fileDescriptor
+
+    act(() => {
+      onChange({
+        sessions: {
+          'server-uid': {
+            uploadId: 'server-uid',
+            fileDescriptor: { id: fileId, name: 'hero.jpg', size: 11, mimeType: 'image/jpeg', previewUri },
+            totalChunks: 1, uploadedChunks: [], status: 'canceled', progress: 0, retries: {},
+          },
+        },
+      })
+    })
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(previewUri)
+    expect(vi.mocked(unregisterFile)).toHaveBeenCalledWith(fileId)
+  })
+
+  it('should not revoke blob URL or unregister file on failed status', () => {
+    const { result } = renderHook(() => useUploadManager())
+    const instance = getMockInstance()
+    const onChange: (snap: unknown) => void = instance.setOnChange.mock.calls[0][0]
+
+    act(() => { result.current.addFiles([makeImageFile('hero.jpg')]) })
+
+    const session = Object.values(result.current.snapshot.sessions)[0]
+    const { id: fileId, previewUri } = session.fileDescriptor
+
+    act(() => {
+      onChange({
+        sessions: {
+          'server-uid': {
+            uploadId: 'server-uid',
+            fileDescriptor: { id: fileId, name: 'hero.jpg', size: 11, mimeType: 'image/jpeg', previewUri },
+            totalChunks: 1, uploadedChunks: [], status: 'failed', progress: 0, retries: {},
+          },
+        },
+      })
+    })
+
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+    expect(vi.mocked(unregisterFile)).not.toHaveBeenCalled()
   })
 })
